@@ -132,7 +132,6 @@
       color: var(--text);
     }
 
-    /* Actions & Status */
     .actions-row {
       display: flex;
       align-items: center;
@@ -159,7 +158,6 @@
       margin-left: 6px;
     }
 
-    /* Export Toolbar */
     .export-toolbar {
       display: flex;
       gap: 8px;
@@ -178,7 +176,6 @@
     }
     .btn-export:hover { color: var(--text); border-color: var(--dim); }
 
-    /* Results Table */
     .table-container {
       border: 1px solid var(--border);
       border-radius: 6px;
@@ -297,7 +294,6 @@
         </div>
         <input type="text" id="singleInput" placeholder="paste raw vendor color" style="width:100%; padding:12px; background:#090d16; border:1px solid #1e293b; border-radius:6px; color:#fff; font-family:inherit;" />
         <button class="btn-cmd" style="margin-top:12px;" onclick="runSingleProcess()">run</button>
-        <div id="singleResult" style="margin-top:15px; font-size:0.9rem;" class="hidden"></div>
       </div>
 
       <!-- TAB 3: SOURCES / BACKEND CONFIG -->
@@ -364,56 +360,60 @@
       const lines = rawText.split("\n").map(l => l.trim()).filter(l => l.length > 0);
       const total = lines.length;
 
-      document.getElementById("counterStatus").innerText = `processing ${total} rows...`;
+      document.getElementById("counterStatus").innerText = `Processing batch of ${total} items via Sheet Gemini formulas...`;
       document.getElementById("tableWrapper").classList.remove("hidden");
       document.getElementById("exportToolbar").classList.remove("hidden");
       
       const tbody = document.getElementById("resultsTbody");
       tbody.innerHTML = "";
       processedData = [];
-      let matchedCount = 0;
 
-      for (let i = 0; i < total; i++) {
-        const raw = lines[i];
-
-        try {
-          const res = await fetch(APPS_SCRIPT_URL, {
-            method: "POST",
-            headers: { "Content-Type": "text/plain;charset=utf-8" },
-            body: JSON.stringify({ rawColor: raw })
-          });
-          const data = await res.json();
-          const facing = data.facing || raw;
-          const family = data.family || "Other";
-
-          matchedCount++;
-          processedData.push({ num: i + 1, raw, facing, family });
-
-          tbody.innerHTML += `
-            <tr>
-              <td class="col-num">${i + 1}</td>
-              <td class="col-raw">${escapeHtml(raw)}</td>
-              <td class="col-facing">${escapeHtml(facing)}</td>
-              <td class="col-family">■ ${escapeHtml(family)}</td>
-            </tr>
-          `;
-        } catch (err) {
-          processedData.push({ num: i + 1, raw, facing: raw, family: "Error" });
-          tbody.innerHTML += `
-            <tr>
-              <td class="col-num">${i + 1}</td>
-              <td class="col-raw">${escapeHtml(raw)}</td>
-              <td class="col-facing">${escapeHtml(raw)}</td>
-              <td class="col-family" style="color:var(--red);">■ Error</td>
-            </tr>
-          `;
+      try {
+        // Send ALL lines in ONE parallel request
+        const res = await fetch(APPS_SCRIPT_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({ rawColors: lines })
+        });
+        
+        const resultsArray = await res.json();
+        
+        if (resultsArray.error) {
+          alert("Backend Error: " + resultsArray.error);
+          return;
         }
-      }
 
-      document.getElementById("counterStatus").innerText = `${total} row${total > 1 ? 's' : ''} · ${matchedCount} matched · 0 missing`;
+        processedData = resultsArray;
+
+        // Render all rows in table
+        resultsArray.forEach((item, i) => {
+          tbody.innerHTML += `
+            <tr>
+              <td class="col-num">${i + 1}</td>
+              <td class="col-raw">${escapeHtml(item.raw)}</td>
+              <td class="col-facing">${escapeHtml(item.facing)}</td>
+              <td class="col-family">■ ${escapeHtml(item.family)}</td>
+            </tr>
+          `;
+        });
+
+        document.getElementById("counterStatus").innerText = `${total} row${total > 1 ? 's' : ''} · ${total} matched · 0 missing`;
+
+      } catch (err) {
+        console.error("Batch error:", err);
+        document.getElementById("counterStatus").innerText = `Error processing batch.`;
+      }
     }
 
-    /* Export Action Handlers */
+    async function runSingleProcess() {
+      const val = document.getElementById("singleInput").value.trim();
+      if (!val) return;
+      document.getElementById("batchInput").value = val;
+      switchTab('batch');
+      runBatchProcess();
+    }
+
+    /* Export Handlers */
     function copyFacingOnly() {
       const txt = processedData.map(d => d.facing).join("\n");
       navigator.clipboard.writeText(txt);
