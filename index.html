@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>nuorder — color-lookup</title>
+  <style>
+    :root {
+      --bg: #090d16;
+      --card-bg: #0f172a;
+      --border: #1e293b;
+      --text: #cbd5e1;
+      --dim: #64748b;
+      --green: #4ade80;
+      --purple: #c084fc;
+      --cyan: #38bdf8;
+      --red: #ff5f56;
+      --yellow: #ffbd2e;
+      --btn-bg: #1e293b;
+      --btn-hover: #334155;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .terminal {
+      width: 100%;
+      max-width: 900px;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.75);
+      overflow: hidden;
+    }
+
+    .title-bar {
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.85rem;
+      color: var(--dim);
+      border-bottom: 1px solid var(--border);
+    }
+    .dot { width: 11px; height: 11px; border-radius: 50%; }
+    .dot-red { background: var(--red); }
+    .dot-yellow { background: var(--yellow); }
+    .dot-green { background: #27c93f; }
+
+    .content { padding: 24px; }
+    
+    .cmd-line { font-weight: 600; font-size: 1rem; margin-bottom: 8px; }
+    .cmd-green { color: var(--green); }
+    .cmd-purple { color: var(--purple); }
+
+    .sub-bar {
+      font-size: 0.85rem;
+      color: var(--dim);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .sub-bar span { color: var(--cyan); font-weight: bold; }
+    
+    .btn-refresh {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--dim);
+      border-radius: 4px;
+      padding: 2px 8px;
+      font-size: 0.75rem;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .btn-refresh:hover { color: var(--text); border-color: var(--dim); }
+
+    .tabs {
+      display: flex;
+      gap: 10px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 12px;
+      margin-bottom: 20px;
+    }
+    .tab {
+      font-size: 0.9rem;
+      color: var(--dim);
+      cursor: pointer;
+      padding: 6px 14px;
+      border-radius: 4px;
+      user-select: none;
+    }
+    .tab.active {
+      color: var(--cyan);
+      background: #1e293b;
+    }
+
+    .input-box-wrapper {
+      position: relative;
+      margin-bottom: 16px;
+    }
+
+    textarea {
+      width: 100%;
+      height: 160px;
+      background: #090d16;
+      border: 1px solid #1e293b;
+      border-radius: 6px;
+      color: var(--dim);
+      font-family: inherit;
+      font-size: 0.9rem;
+      padding: 14px;
+      outline: none;
+      resize: vertical;
+      line-height: 1.5;
+    }
+    textarea:focus {
+      border-color: #0ea5e9;
+      box-shadow: 0 0 10px rgba(14, 165, 233, 0.15);
+      color: var(--text);
+    }
+
+    /* Actions & Status */
+    .actions-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .btn-cmd {
+      background: var(--btn-bg);
+      border: 1px solid var(--border);
+      color: var(--cyan);
+      padding: 6px 14px;
+      border-radius: 4px;
+      font-family: inherit;
+      font-size: 0.85rem;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .btn-cmd:hover { background: var(--btn-hover); color: #ffffff; }
+
+    .status-counter {
+      font-size: 0.85rem;
+      color: var(--dim);
+      margin-left: 6px;
+    }
+
+    /* Export Toolbar */
+    .export-toolbar {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+    .btn-export {
+      background: #1e293b;
+      border: 1px solid var(--border);
+      color: var(--dim);
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-size: 0.78rem;
+      font-family: inherit;
+      cursor: pointer;
+    }
+    .btn-export:hover { color: var(--text); border-color: var(--dim); }
+
+    /* Results Table */
+    .table-container {
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      overflow-x: auto;
+      max-height: 320px;
+      overflow-y: auto;
+      background: #090d16;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+      text-align: left;
+    }
+
+    th {
+      background: #0f172a;
+      color: var(--dim);
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      font-weight: 600;
+    }
+
+    td {
+      padding: 10px 14px;
+      border-bottom: 1px solid #1e293b;
+      color: var(--text);
+    }
+
+    tr:last-child td { border-bottom: none; }
+
+    .col-num { color: var(--dim); width: 40px; }
+    .col-raw { color: var(--dim); }
+    .col-facing { color: #ffffff; font-weight: 600; }
+    .col-family { color: #f59e0b; }
+
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+  <div class="terminal">
+    <div class="title-bar">
+      <span class="dot dot-red"></span>
+      <span class="dot dot-yellow"></span>
+      <span class="dot dot-green"></span>
+      <span style="margin-left: 8px;">nuorder — color-lookup</span>
+    </div>
+
+    <div class="content">
+      <div class="cmd-line">
+        <span class="cmd-green">$ nuorder color-lookup</span> <span class="cmd-purple">--watch</span>
+      </div>
+
+      <div class="sub-bar">
+        indexed <span>116,508</span> colors · <span>14</span> families 
+        <button class="btn-refresh" onclick="location.reload()">↺ refresh</button>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <div class="tabs">
+        <div class="tab" onclick="switchTab('lookup')">lookup</div>
+        <div class="tab active" onclick="switchTab('batch')">batch</div>
+        <div class="tab" onclick="switchTab('sources')">sources</div>
+      </div>
+
+      <!-- TAB 1: BATCH INTERFACE -->
+      <div id="tabBatch">
+        <div class="cmd-line" style="font-size:0.9rem; margin-bottom:14px;">
+          <span class="cmd-green">$ nuorder color-lookup</span> <span class="cmd-purple">--batch</span> &lt; colors.txt
+        </div>
+
+        <div class="input-box-wrapper">
+          <textarea id="batchInput" placeholder="paste one raw vendor color per line — a column straight out of Excel works. if you paste several columns, the first one is used"></textarea>
+        </div>
+
+        <div class="actions-row">
+          <button class="btn-cmd" onclick="runBatchProcess()">run</button>
+          <button class="btn-cmd" style="color:var(--dim);" onclick="clearAll()">clear</button>
+          <span id="counterStatus" class="status-counter">0 rows · 0 matched · 0 missing</span>
+        </div>
+
+        <!-- Export Toolbar -->
+        <div id="exportToolbar" class="export-toolbar hidden">
+          <button class="btn-export" onclick="copyFacingOnly()">copy facing</button>
+          <button class="btn-export" onclick="copyFamilyOnly()">copy family</button>
+          <button class="btn-export" onclick="copyFacingAndFamily()">copy facing + family</button>
+          <button class="btn-export" onclick="copyAllColumns()">copy all columns</button>
+          <button class="btn-export" onclick="copyMissingOnly()">copy missing only</button>
+          <button class="btn-export" onclick="downloadCSV()">download .csv</button>
+        </div>
+
+        <!-- Output Results Table -->
+        <div id="tableWrapper" class="table-container hidden">
+          <table>
+            <thead>
+              <tr>
+                <th class="col-num">#</th>
+                <th>raw_input</th>
+                <th>customer_facing_color</th>
+                <th>color_family</th>
+              </tr>
+            </thead>
+            <tbody id="resultsTbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- TAB 2: SINGLE LOOKUP INTERFACE -->
+      <div id="tabLookup" class="hidden">
+        <div class="cmd-line" style="font-size:0.9rem; margin-bottom:14px;">
+          <span class="cmd-green">$ nuorder color-lookup</span> <span class="cmd-purple">--single</span>
+        </div>
+        <input type="text" id="singleInput" placeholder="paste raw vendor color" style="width:100%; padding:12px; background:#090d16; border:1px solid #1e293b; border-radius:6px; color:#fff; font-family:inherit;" />
+        <button class="btn-cmd" style="margin-top:12px;" onclick="runSingleProcess()">run</button>
+        <div id="singleResult" style="margin-top:15px; font-size:0.9rem;" class="hidden"></div>
+      </div>
+
+      <!-- TAB 3: SOURCES / BACKEND CONFIG -->
+      <div id="tabSources" class="hidden">
+        <div style="font-size:0.85rem; color:var(--dim); margin-bottom:10px;">
+          Google Apps Script Web App Endpoint URL:
+        </div>
+        <input type="text" id="scriptUrlInput" placeholder="Paste Apps Script Web App URL..." style="width:100%; padding:12px; background:#090d16; border:1px solid #1e293b; border-radius:6px; color:#fff; font-family:inherit;" onchange="saveBackendUrl()" />
+        <div id="urlSavedStatus" style="font-size:0.8rem; color:var(--green); margin-top:8px;"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    let APPS_SCRIPT_URL = localStorage.getItem("gas_url") || "";
+    document.getElementById("scriptUrlInput").value = APPS_SCRIPT_URL;
+
+    let processedData = [];
+
+    function saveBackendUrl() {
+      const val = document.getElementById("scriptUrlInput").value.trim();
+      localStorage.setItem("gas_url", val);
+      APPS_SCRIPT_URL = val;
+      document.getElementById("urlSavedStatus").innerText = "✓ Backend URL saved!";
+    }
+
+    function switchTab(name) {
+      document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+      document.getElementById("tabBatch").classList.add("hidden");
+      document.getElementById("tabLookup").classList.add("hidden");
+      document.getElementById("tabSources").classList.add("hidden");
+
+      if (name === 'batch') {
+        document.querySelectorAll(".tab")[1].classList.add("active");
+        document.getElementById("tabBatch").classList.remove("hidden");
+      } else if (name === 'lookup') {
+        document.querySelectorAll(".tab")[0].classList.add("active");
+        document.getElementById("tabLookup").classList.remove("hidden");
+      } else if (name === 'sources') {
+        document.querySelectorAll(".tab")[2].classList.add("active");
+        document.getElementById("tabSources").classList.remove("hidden");
+      }
+    }
+
+    function clearAll() {
+      document.getElementById("batchInput").value = "";
+      document.getElementById("resultsTbody").innerHTML = "";
+      document.getElementById("tableWrapper").classList.add("hidden");
+      document.getElementById("exportToolbar").classList.add("hidden");
+      document.getElementById("counterStatus").innerText = "0 rows · 0 matched · 0 missing";
+      processedData = [];
+    }
+
+    async function runBatchProcess() {
+      const rawText = document.getElementById("batchInput").value.trim();
+      if (!rawText) return alert("Please paste vendor colors first.");
+
+      if (!APPS_SCRIPT_URL) {
+        switchTab('sources');
+        return alert("Please configure your Google Apps Script Web App URL first.");
+      }
+
+      const lines = rawText.split("\n").map(l => l.trim()).filter(l => l.length > 0);
+      const total = lines.length;
+
+      document.getElementById("counterStatus").innerText = `processing ${total} rows...`;
+      document.getElementById("tableWrapper").classList.remove("hidden");
+      document.getElementById("exportToolbar").classList.remove("hidden");
+      
+      const tbody = document.getElementById("resultsTbody");
+      tbody.innerHTML = "";
+      processedData = [];
+      let matchedCount = 0;
+
+      for (let i = 0; i < total; i++) {
+        const raw = lines[i];
+
+        try {
+          const res = await fetch(APPS_SCRIPT_URL, {
+            method: "POST",
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify({ rawColor: raw })
+          });
+          const data = await res.json();
+          const facing = data.facing || raw;
+          const family = data.family || "Other";
+
+          matchedCount++;
+          processedData.push({ num: i + 1, raw, facing, family });
+
+          tbody.innerHTML += `
+            <tr>
+              <td class="col-num">${i + 1}</td>
+              <td class="col-raw">${escapeHtml(raw)}</td>
+              <td class="col-facing">${escapeHtml(facing)}</td>
+              <td class="col-family">■ ${escapeHtml(family)}</td>
+            </tr>
+          `;
+        } catch (err) {
+          processedData.push({ num: i + 1, raw, facing: raw, family: "Error" });
+          tbody.innerHTML += `
+            <tr>
+              <td class="col-num">${i + 1}</td>
+              <td class="col-raw">${escapeHtml(raw)}</td>
+              <td class="col-facing">${escapeHtml(raw)}</td>
+              <td class="col-family" style="color:var(--red);">■ Error</td>
+            </tr>
+          `;
+        }
+      }
+
+      document.getElementById("counterStatus").innerText = `${total} row${total > 1 ? 's' : ''} · ${matchedCount} matched · 0 missing`;
+    }
+
+    /* Export Action Handlers */
+    function copyFacingOnly() {
+      const txt = processedData.map(d => d.facing).join("\n");
+      navigator.clipboard.writeText(txt);
+      alert("Copied customer_facing_color to clipboard!");
+    }
+
+    function copyFamilyOnly() {
+      const txt = processedData.map(d => d.family).join("\n");
+      navigator.clipboard.writeText(txt);
+      alert("Copied color_family to clipboard!");
+    }
+
+    function copyFacingAndFamily() {
+      const txt = processedData.map(d => `${d.facing}\t${d.family}`).join("\n");
+      navigator.clipboard.writeText(txt);
+      alert("Copied facing + family (TSV) to clipboard!");
+    }
+
+    function copyAllColumns() {
+      const txt = processedData.map(d => `${d.raw}\t${d.facing}\t${d.family}`).join("\n");
+      navigator.clipboard.writeText(txt);
+      alert("Copied all columns to clipboard!");
+    }
+
+    function copyMissingOnly() {
+      const txt = processedData.filter(d => d.family === 'Other' || d.family === 'Error').map(d => d.raw).join("\n");
+      navigator.clipboard.writeText(txt || "No missing matches found.");
+    }
+
+    function downloadCSV() {
+      let csvStr = "raw_input,customer_facing_color,color_family\n";
+      processedData.forEach(d => {
+        csvStr += `"${d.raw}","${d.facing}","${d.family}"\n`;
+      });
+      const blob = new Blob([csvStr], { type: "text/csv" });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "nuorder_cleaned_colors.csv";
+      a.click();
+    }
+
+    function escapeHtml(str) {
+      return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+  </script>
+</body>
+</html>
