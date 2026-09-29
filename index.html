@@ -1,862 +1,639 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>nuorder — color-lookup</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NuORDER — Color Intelligence Dashboard</title>
 <style>
 :root{
-  --bg:#05080b;
-  --window:#0a0f15;
-  --bar:#141b27;
-  --bar2:#151d2a;
-  --border:#202b3a;
-  --border2:#293548;
-  --text:#8b9bb4;
-  --text-hi:#e9eef7;
-  --cyan:#20d7e8;
-  --green:#35f27d;
-  --purple:#b9a7ff;
-  --yellow:#ffbd3b;
-  --red:#ff5d63;
-  --mono:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono",monospace;
+  --bg:#06090d;--panel:#0b1017;--panel2:#101722;--panel3:#141d2a;
+  --border:#263346;--border2:#33445b;--text:#d9e2f0;--dim:#71839d;
+  --cyan:#27dce8;--green:#35f27d;--yellow:#ffc02f;--red:#ff6262;--purple:#c99cff;
+  --mono:"SFMono-Regular","Cascadia Code","Roboto Mono","Fira Code",Consolas,monospace;
 }
 *{box-sizing:border-box}
-html,body{margin:0;min-height:100%;background:var(--bg)}
-body{
-  color:var(--text);
-  font-family:var(--mono);
-  display:flex;
-  justify-content:center;
-  padding:32px 24px 42px;
-}
-button,input,textarea{font:inherit}
-.app{width:min(1230px,100%)}
-.window{
-  overflow:hidden;
-  border:1px solid #202a38;
-  border-radius:14px;
-  background:var(--window);
-  box-shadow:0 24px 80px rgba(0,0,0,.5);
-}
-.titlebar{
-  height:59px;
-  background:linear-gradient(#151d29,#131a25);
-  border-bottom:1px solid #242f40;
-  display:flex;
-  align-items:center;
-  padding:0 20px;
-  gap:9px;
-}
-.dot{width:16px;height:16px;border-radius:50%}
-.red{background:#ff5b61}.yellow{background:#ffbd2e}.green{background:#28c840}
-.title{
-  margin-left:11px;
-  color:#657793;
-  font-size:17px;
-  letter-spacing:.01em;
-}
-.body{padding:28px 26px 30px}
-.command{
-  display:flex;
-  align-items:center;
-  gap:10px;
-  color:var(--text-hi);
-  font-weight:700;
-  font-size:18px;
-  line-height:1.3;
-}
-.prompt{color:var(--green)}
-.flag{color:var(--purple)}
-.status{
-  margin-top:10px;
-  display:flex;
-  align-items:center;
-  gap:9px;
-  font-size:17px;
-  min-height:28px;
-}
-.status .num,.status .families{color:var(--cyan)}
-.status .time{color:var(--green)}
-.refresh{
-  margin-left:2px;
-  background:#0d131c;
-  color:#70829f;
-  border:1px solid #334155;
-  border-radius:7px;
-  padding:7px 12px;
-  cursor:pointer;
-}
-.refresh:hover{border-color:#53647c;color:#9baac0}
-.tabs{
-  display:flex;
-  margin-top:26px;
-  border-bottom:1px solid #263141;
-  height:52px;
-}
-.tab{
-  border:0;
-  border-top:1px solid transparent;
-  border-left:1px solid transparent;
-  border-right:1px solid transparent;
-  background:transparent;
-  color:#657793;
-  padding:0 21px;
-  font-size:18px;
-  cursor:pointer;
-}
-.tab.active{
-  color:#28dbe8;
-  background:#0d131d;
-  border-color:#263141;
-  border-bottom-color:#0d131d;
-  border-radius:8px 8px 0 0;
-}
-.panel{padding-top:22px}
-.promptbox{
-  min-height:69px;
-  border:1px solid #263243;
-  border-radius:10px;
-  background:#0d131c;
-  display:flex;
-  align-items:center;
-  padding:0 15px;
-}
-.promptbox .chevron{
-  color:#2ad9e8;
-  font-size:25px;
-  margin-right:10px;
-}
-.promptbox input{
-  flex:1;
-  min-width:0;
-  background:none;
-  border:0;
-  outline:0;
-  color:#c9d4e5;
-  font-size:22px;
-}
-.promptbox input::placeholder{color:#42536d}
-.lookup-content{display:none}
-.lookup-content.active{display:block}
-.result{
-  margin-top:18px;
-  border-top:1px solid #1d2937;
-  padding-top:16px;
-}
- .result-meta{
-  margin-top:10px;
-  color:#53647d;
-  font-size:13px;
-  text-align:right;
-}
-.result-row{
-  display:grid;
-  grid-template-columns:270px 1fr auto;
-  align-items:center;
-  gap:15px;
-  min-height:52px;
-}
-.key{color:#71829b;font-size:15px}
-.value{color:#e7edf7;font-size:18px}
-.copy{
-  background:#0d141e;
-  border:1px solid #2a3749;
-  color:#8394ad;
-  border-radius:6px;
-  padding:7px 10px;
-  cursor:pointer;
-  font-size:13px;
-}
-.copy:hover{color:#cbd5e4;border-color:#46566e}
-.lookup-copy-options{
-  margin-top:14px;
-  display:flex;
-  gap:9px;
-  flex-wrap:wrap;
-}
-.lookup-copy-options .copy-main:disabled{
-  opacity:.48;
-  cursor:not-allowed;
-}
-.lookup-copy-options .copy-main:not(:disabled){
-  opacity:1;
-}
-.copy-actions{
-  margin-top:16px;
-  display:flex;
-  align-items:center;
-  gap:9px;
-  flex-wrap:wrap;
-}
-.copy-main{
-  min-height:37px;
-  padding:7px 12px;
-  border-radius:6px;
-  font-size:15px;
-  color:#7f91ad;
-  background:#101822;
-  border:1px solid #2d3b4f;
-  white-space:nowrap;
-}
-.copy-main:hover{
-  color:#22d9e8;
-  border-color:#3b506a;
-  background:#111c28;
-}
-.copy.is-copied{
-  color:#35f27d;
-  border-color:#286b45;
-  background:#0e1b16;
-}
-.command-copy{
-  margin-top:14px;
-  border:1px solid #202c3d;
-  background:#0a1018;
-  padding:14px;
-  border-radius:7px;
-  color:#6d7e97;
-}
+html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text);font-family:var(--mono)}
+body{padding:32px 20px 50px}
+button,input,textarea,select{font:inherit}
+button{cursor:pointer}
+.shell{max-width:1230px;margin:auto}
+.terminal{background:#090e15;border:1px solid #273244;border-radius:15px;overflow:hidden;box-shadow:0 25px 70px rgba(0,0,0,.42)}
+.titlebar{height:59px;background:#121a27;border-bottom:1px solid #263244;display:flex;align-items:center;padding:0 20px}
+.dots{display:flex;gap:12px;margin-right:22px}.dot{width:16px;height:16px;border-radius:50%}.r{background:#ff5757}.y{background:#ffbd2e}.g{background:#28c840}
+.title{color:#6f819c;font-size:18px}
+.body{padding:28px 27px 22px}
+.prompt{font-weight:700;font-size:20px;color:#f0f5fb;margin-bottom:10px}.prompt .dollar{color:var(--green)}.cmd{color:#bca2ff}
+.stats{color:#6f829d;font-size:17px;margin-bottom:26px}.cyan{color:var(--cyan)}.green{color:var(--green)}.yellow{color:var(--yellow)}
+.refresh{margin-left:10px;background:#101925;border:1px solid #3a4a61;color:#8395af;padding:8px 12px;border-radius:6px}
+.tabs{display:flex;border-bottom:1px solid #253142;margin-bottom:22px}
+.tab{background:transparent;border:0;color:#71829c;padding:13px 22px;font-size:17px;border-radius:8px 8px 0 0}
+.tab.active{color:var(--cyan);background:#0e151f;border:1px solid #2a384c;border-bottom-color:#0e151f;margin-bottom:-1px}
+.view{display:none}.view.active{display:block}
+.command{color:var(--green);font-size:17px;margin:18px 0}.command span{color:#71839d}.command .accent{color:var(--purple)}
+.input{width:100%;background:#0d141e;border:1px solid #273447;border-radius:9px;color:#dce7f5;padding:18px 20px;outline:none;font-size:19px}
+.input:focus{border-color:#36c9d7;box-shadow:0 0 0 2px rgba(39,220,232,.08)}
+.input::placeholder{color:#50627c}
+.copy-row{display:flex;gap:9px;flex-wrap:wrap;margin:14px 0 20px}
+.copy{background:#101923;border:1px solid #314158;color:#8092ad;border-radius:6px;padding:8px 12px;font-size:15px}
+.copy:hover:not(:disabled){color:var(--cyan);border-color:#3d566f;background:#121e2b}
+.copy:disabled{opacity:.42;cursor:not-allowed}
+.result{border:1px solid #273548;background:#0d141e;border-radius:9px;overflow:hidden}
+.result-head{padding:13px 16px;border-bottom:1px solid #273548;color:#657993;font-size:14px}
+.result-row{display:grid;grid-template-columns:260px 1fr;padding:15px 17px;border-bottom:1px solid #202d3e;align-items:center}
+.key{color:#667b97}.value{color:#edf4fd;font-size:18px;font-weight:700}
+.meta{display:flex;gap:16px;flex-wrap:wrap;padding:12px 17px;color:#687b95;font-size:14px}
+.badge{border:1px solid #33465e;border-radius:5px;padding:4px 8px;color:#8ea2bf}.confidence-high{color:var(--green);border-color:#2c6845}.confidence-mid{color:var(--yellow);border-color:#725b22}.confidence-low{color:var(--red);border-color:#713737}
+.explain{padding:0 17px 17px;color:#73859e;font-size:14px;line-height:1.7}.explain strong{color:#9aabc2}
+textarea.input{min-height:280px;resize:vertical;line-height:1.65}
+.controls{display:flex;gap:9px;flex-wrap:wrap;margin-top:13px}
+.action{background:#101923;border:1px solid #304158;color:#8ca0bc;border-radius:6px;padding:9px 15px}.action:hover{border-color:#4a617e;color:#d5dfeb}.primary{border-color:#3bc9d5;color:#30dce8}
+.table-wrap{margin-top:18px;border:1px solid #263548;border-radius:9px;overflow:auto}
+table{width:100%;border-collapse:collapse;min-width:850px}th,td{padding:12px 14px;text-align:left;border-bottom:1px solid #202d3d}th{background:#121b28;color:#7588a4;font-weight:500}td{color:#aebdd0}td strong{color:#eef5ff}.empty{color:#566983}
+.source-card{border:1px solid #263548;border-radius:9px;background:#0d141e;padding:18px}
+.help{color:#6f829d;font-size:14px;line-height:1.7;margin-top:14px}
+.modebar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:13px 0;color:#657995;font-size:14px}
+.mode{background:#0e1620;border:1px solid #2c3b51;color:#72849e;padding:7px 11px;border-radius:6px}.mode.active{color:var(--cyan);border-color:#2dabb8;background:#10202a}
+.footer{background:#121a27;border-top:1px solid #263244;padding:14px 20px;display:flex;justify-content:space-between;color:#71849f;font-size:14px}
+.hints{text-align:center;color:#5f718c;font-size:14px;margin-top:18px}.hints kbd{background:#121b27;border:1px solid #304158;padding:4px 7px;border-radius:5px;color:#8294ae}
 .hidden{display:none!important}
-.batch textarea{
-  width:100%;
-  min-height:180px;
-  resize:vertical;
-  background:#0d131c;
-  border:1px solid #263243;
-  border-radius:10px;
-  color:#dce5f2;
-  padding:16px;
-  outline:none;
-}
-.sources{display:none}
-.statusbar{
-  height:51px;
-  background:#151d2a;
-  border-top:1px solid #222e3e;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  padding:0 21px;
-  font-size:16px;
-}
-.help{
-  text-align:center;
-  padding-top:21px;
-  color:#52627b;
-  font-size:16px;
-}
-kbd{
-  border:1px solid #314056;
-  background:#141e2b;
-  border-radius:4px;
-  padding:4px 7px;
-  color:#71839e;
-}
-.batch-controls{margin-top:12px;display:flex;gap:8px}
-.batch-copy-options{
-  margin-top:16px;
-  display:flex;
-  gap:9px;
-  flex-wrap:wrap;
-}
-.batch-copy-options .copy-main:disabled{
-  opacity:.48;
-  cursor:not-allowed;
-}
-
-.action{
-  background:#101823;
-  border:1px solid #2b394c;
-  color:#8ea0ba;
-  border-radius:6px;
-  padding:8px 13px;
-  cursor:pointer;
-}
-.table-wrap{margin-top:18px;overflow:auto}
-table{width:100%;border-collapse:collapse}
-th,td{padding:11px;border-bottom:1px solid #202b3a;text-align:left;font-size:14px}
-th{color:#657793;font-weight:400}
-td{color:#a9b6c9}
-.source-list{list-style:none;padding:0;margin:0 0 15px}
-.source-list li{padding:12px;border-bottom:1px solid #202b3a}
-.source-form{display:flex;gap:8px}
-.source-form input{flex:1;background:#0d131c;border:1px solid #263243;border-radius:7px;padding:11px;color:#dce5f2;outline:0}
-@media(max-width:760px){
-  body{padding:12px}
-  .body{padding:20px 16px}
-  .result-row{grid-template-columns:1fr}
-  .statusbar{font-size:12px}
-  .help{font-size:12px}
-  .title{font-size:14px}
-}
+@media(max-width:720px){body{padding:12px}.body{padding:18px}.result-row{grid-template-columns:1fr;gap:7px}.footer{gap:12px;flex-direction:column}.title{font-size:14px}.prompt{font-size:17px}}
 </style>
 </head>
 <body>
-<div class="app">
-  <div class="window">
-    <header class="titlebar">
-      <span class="dot red"></span>
-      <span class="dot yellow"></span>
-      <span class="dot green"></span>
-      <span class="title">nuorder — color-lookup</span>
-    </header>
+<div class="shell">
+<div class="terminal">
+  <div class="titlebar">
+    <div class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></div>
+    <div class="title">nuorder — color-intelligence</div>
+  </div>
 
-    <div class="body">
-      <div class="command">
-        <span class="prompt">$</span>
-        <span>nuorder color-lookup</span>
-        <span class="flag">--watch</span>
-      </div>
+  <div class="body">
+    <div class="prompt"><span class="dollar">$</span> nuorder color-lookup <span class="cmd">--watch</span></div>
+    <div class="stats">indexed <span class="cyan" id="colorCount">116,508</span> colors · <span class="cyan">14</span> families · <span class="green">smart</span> engine <button class="refresh" id="refresh">↻ refresh</button></div>
 
-      <div class="status">
-        <span>indexed</span>
-        <span class="num" id="colorCount">116,508</span>
-        <span>colors</span>
-        <span>·</span>
-        <span class="families" id="familyCount">14</span>
-        <span>families</span>
-        <span>·</span>
-        <span class="time">300ms</span>
-        <button class="refresh" id="refresh">↻ refresh</button>
-      </div>
-
-      <nav class="tabs">
-        <button class="tab active" data-panel="lookup">lookup</button>
-        <button class="tab" data-panel="batch">batch</button>
-        <button class="tab" data-panel="sources">sources</button>
-      </nav>
-
-      <section class="panel lookup-content active" id="lookup">
-        <div class="promptbox">
-          <span class="chevron">›</span>
-          <input id="query" placeholder="paste raw vendor color" autocomplete="off">
-        </div>
-
-        <div class="lookup-copy-options" aria-label="Copy options">
-          <button class="copy copy-main" id="copyFacingOption" type="button" disabled>
-            copy facing
-          </button>
-          <button class="copy copy-main" id="copyFamilyOption" type="button" disabled>
-            copy family
-          </button>
-        </div>
-
-        <div class="result hidden" id="result">
-          <div class="result-row">
-            <span class="key">customer_facing_color</span>
-            <span class="value" id="facing"></span>
-          </div>
-
-          <div class="result-row">
-            <span class="key">color_family</span>
-            <span class="value" id="family"></span>
-          </div>
-
-          <div class="result-meta" id="charCount">0/30 chars</div>
-        </div>
-      </section>
-
-      <section class="panel batch hidden" id="batch">
-        <div class="command" style="margin-bottom:12px;font-size:15px">
-          <span class="prompt">$</span>
-          <span>nuorder color-lookup</span>
-          <span class="flag">--batch</span>
-          <span style="color:#53647d">&lt; colors.txt</span>
-        </div>
-        <textarea id="batchInput" placeholder="paste one raw vendor color per line"></textarea>
-        <div class="batch-controls">
-          <button class="action" id="runBatch">run</button>
-          <button class="action" id="clearBatch">clear</button>
-        </div>
-
-        <div class="batch-copy-options" id="batchCopyOptions">
-          <button class="copy copy-main" id="batchCopyFacing" type="button" disabled>copy facing</button>
-          <button class="copy copy-main" id="batchCopyFamily" type="button" disabled>copy family</button>
-        </div>
-
-        <div class="table-wrap hidden" id="batchTable">
-          <table>
-            <thead><tr><th>#</th><th>raw_input</th><th>customer_facing_color</th><th>color_family</th></tr></thead>
-            <tbody id="batchRows"></tbody>
-          </table>
-        </div>
-      </section>
-
-      <section class="panel sources hidden" id="sources">
-        <div class="command" style="margin-bottom:18px;font-size:15px">
-          <span class="prompt">$</span>
-          <span>nuorder sources</span>
-          <span class="flag">--list</span>
-        </div>
-        <ul class="source-list" id="sourceList">
-          <li>built-in color index <span style="float:right;color:#35f27d">active</span></li>
-        </ul>
-        <div class="source-form">
-          <input id="sourceUrl" placeholder="https://… published CSV link">
-          <button class="action" id="addSource">add source</button>
-        </div>
-      </section>
+    <div class="tabs">
+      <button class="tab active" data-tab="lookup">lookup</button>
+      <button class="tab" data-tab="batch">batch</button>
+      <button class="tab" data-tab="sources">sources</button>
     </div>
 
-    <footer class="statusbar">
-      <span>index: <span id="footerCount">116,508 colors</span></span>
-      <span>rebuilt: <span id="rebuilt"></span></span>
-    </footer>
+    <section class="view active" id="lookup">
+      <div class="command">$ nuorder color-lookup <span>--smart --sense</span></div>
+
+      <input id="lookupInput" class="input" autocomplete="off"
+        placeholder="paste raw vendor color"
+        aria-label="Raw vendor color">
+
+      <div class="modebar">
+        mode:
+        <button class="mode active" data-mode="sense">sense</button>
+        <button class="mode" data-mode="smart">smart</button>
+        <button class="mode" data-mode="strict">strict</button>
+      </div>
+
+      <div class="copy-row">
+        <button class="copy" id="copyFacing" disabled>copy facing</button>
+        <button class="copy" id="copyFamily" disabled>copy family</button>
+      </div>
+
+      <div class="result" id="lookupResult">
+        <div class="result-head">resolved output</div>
+        <div class="result-row"><span class="key">customer_facing_color</span><span class="value" id="facing">—</span></div>
+        <div class="result-row"><span class="key">color_family</span><span class="value" id="family">—</span></div>
+        <div class="meta">
+          <span class="badge" id="confidence">confidence —</span>
+          <span class="badge" id="charCount">0/30 chars</span>
+          <span class="badge" id="detected">detected —</span>
+        </div>
+        <div class="explain" id="explanation">Enter a supplier color to see the normalization path and semantic interpretation.</div>
+      </div>
+    </section>
+
+    <section class="view" id="batch">
+      <div class="command">$ nuorder color-lookup <span>--batch &lt; colors.txt</span></div>
+      <textarea id="batchInput" class="input" placeholder="Paste raw supplier strings (one per line)...
+blac
+wht
+TESTA DI MORO / GOLD
+RETE ROSA 018/MIGN. NAP. DUSTY || DUSTY PINK 018
+NERO H140CM || NERO H140CM || ARGENTO FONDO BIANCO"></textarea>
+      <div class="controls">
+        <button class="action primary" id="runBatch">run</button>
+        <button class="action" id="clearBatch">clear</button>
+      </div>
+      <div class="copy-row">
+        <button class="copy" id="batchCopyFacing" disabled>copy facing</button>
+        <button class="copy" id="batchCopyFamily" disabled>copy family</button>
+      </div>
+      <div class="table-wrap hidden" id="batchWrap">
+        <table>
+          <thead><tr><th>#</th><th>raw_input</th><th>customer_facing_color</th><th>color_family</th><th>confidence</th></tr></thead>
+          <tbody id="batchBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="view" id="sources">
+      <div class="command">$ nuorder sources <span>--list</span></div>
+      <div class="source-card">
+        <input id="sourceUrl" class="input" placeholder="Published Google Sheet CSV URL...">
+        <div class="controls">
+          <button class="action primary" id="linkSource">link CSV endpoint</button>
+        </div>
+        <div class="help">
+          Requires <b>COLOR</b> and <b>Color Family</b> columns. This local dashboard keeps the
+          deterministic color engine as the final authority; imported source rows can be added as
+          aliases without replacing the older rules.
+        </div>
+      </div>
+    </section>
   </div>
 
-  <div class="help">
-    <kbd>↑</kbd> <kbd>↓</kbd> navigate
-    · <kbd>tab</kbd> complete
-    · <kbd>↵</kbd> copy
-    · <kbd>esc</kbd> clear
-    · <kbd>ctrl</kbd> <kbd>↵</kbd> run batch
+  <div class="footer">
+    <span>index: <span id="footerCount">116,508</span> colors</span>
+    <span>rebuilt: <span id="time"></span></span>
   </div>
+</div>
+<div class="hints"><kbd>↑</kbd> <kbd>↓</kbd> navigate · <kbd>tab</kbd> complete · <kbd>↵</kbd> copy · <kbd>esc</kbd> clear · <kbd>ctrl</kbd> <kbd>↵</kbd> run batch</div>
 </div>
 
 <script>
 /* ============================================================
-   NUORDER COLOR CLEANING ENGINE
-   UI = terminal replica
-   Engine = strict multi-stage color normalization rules
+   NUORDER COLOR INTELLIGENCE ENGINE
+   Legacy rules are intentionally retained and run before
+   semantic/sense rules. No external API is required.
    ============================================================ */
 
-/* Construction / material / factory noise words */
 const NOISE_WORDS = new Set([
-  'RETE','MIGN','MIGNON','NAP','NAPPA','INGROP','TEMP','FONDO',
-  'CAMOSCIO','VRV','NEW','NW','LIN','SF','TI','DS','BOT','WITH',
-  'S','M','L'
+  'RETE','MIGN','MIGNON','NAP','NAPPA','INGROP','TEMP','FONDO','CAMOSCIO',
+  'VRV','NEW','NW','LIN','SF','TI','DS','BOT','WITH','S','M','L',
+  'H','CM','MM','PCS','PC','STYLE','COLOR','COLOUR','COL','COD','CODE',
+  'ART','ARTICLE','ITEM','REF','REFERENCE','FONDO','BASE','FABRIC','LEATHER'
 ]);
 
-/* Abbreviations + multilingual vendor terms */
+/* Original mappings retained. */
 const COLOR_MAP = {
-  'BLAC':'Black',
-  'WHT':'White',
-  'ROSA':'Pink',
-  'NERO':'Black',
-  'BLK':'Black',
-  'ARGENTO':'Silver',
-  'BIANCO':'White',
-  'MAROON':'Maroon',
-  'BLU':'Blue',
-  'GRY':'Grey',
-  'GRAY':'Grey',
-  'GRN':'Green',
-  'NV':'Navy',
-  'DK':'Dark',
-  'CARM':'Carmine',
-  'BUTT':'Butter',
-  'BUT':'Butter',
-  'T.MORO':'Testa Di Moro',
-  'TMORO':'Testa Di Moro'
+  'BLAC':'Black','WHT':'White','ROSA':'Pink','NERO':'Black','BLK':'Black',
+  'ARGENTO':'Silver','BIANCO':'White','MAROON':'Maroon','BLU':'Blue',
+  'GRY':'Grey','GRAY':'Grey','GRN':'Green','NV':'Navy','DK':'Dark',
+  'CARM':'Carmine','BUTT':'Butter','BUT':'Butter','T.MORO':'Testa Di Moro',
+  'ROSSO':'Red','ROUGE':'Red','VERDE':'Green','GIALLO':'Yellow',
+  'MARRONE':'Brown','MORO':'Brown','BRUNO':'Brown','ARANCIO':'Orange',
+  'ARANCIONE':'Orange','VIOLA':'Purple','LILLA':'Lilac','BEIGE':'Beige',
+  'AZZURRO':'Light Blue','CELESTE':'Sky Blue','BLUETTE':'Blue',
+  'BLU MARINO':'Navy','MARINE':'Navy','ORO':'Gold','ARGENT':'Silver',
+  'NOIR':'Black','BLANC':'White','GRIS':'Grey','VERT':'Green',
+  'JAUNE':'Yellow','MARRON':'Brown','ROSA':'Pink','ROJO':'Red',
+  'AZUL':'Blue','BLANCO':'White','NEGRO':'Black','VERDE':'Green',
+  'AMARILLO':'Yellow','MORADO':'Purple','CASTAÑO':'Brown',
+  'SCHWARZ':'Black','WEISS':'White','GRAU':'Grey','ROT':'Red',
+  'BLAU':'Blue','GRUEN':'Green','GRÜN':'Green','GELB':'Yellow',
+  'BRAUN':'Brown','ROSA':'Pink'
 };
 
 const OFF_WHITE_TERMS = new Set([
-  'ivory','cream','off white','offwhite','off-white','bone',
-  'ecru','champagne','vanilla','mascarpone'
+  'ivory','cream','off white','offwhite','off-white','bone','ecru',
+  'champagne','vanilla','mascarpone','panna','panna latte','latte'
 ]);
 
+/* Original family rules retained and extended. */
 const FAMILY_RULES = [
-  {match:'testa di moro', family:'Brown'},
-  {match:'dusty pink', family:'Pink'},
-  {match:'flame red', family:'Red'},
-  {match:'burnt sienna', family:'Brown'},
-  {match:'maroon', family:'Red'},
-  {match:'carmine', family:'Red'},
-  {match:'oxblood', family:'Red'},
-  {match:'red', family:'Red'},
-  {match:'pink', family:'Pink'},
-  {match:'cognac', family:'Brown'},
-  {match:'cuoio', family:'Brown'},
-  {match:'sienna', family:'Brown'},
-  {match:'camel', family:'Brown'},
-  {match:'brown', family:'Brown'},
-  {match:'navy', family:'Blue'},
-  {match:'blue', family:'Blue'},
-  {match:'charcoal', family:'Grey'},
-  {match:'grey', family:'Grey'},
-  {match:'gray', family:'Grey'},
-  {match:'tan', family:'Tan'},
-  {match:'black', family:'Black'},
-  {match:'butter', family:'Yellow'},
-  {match:'yellow', family:'Yellow'},
-  {match:'gold', family:'Yellow'},
-  {match:'white', family:'White'},
-  {match:'silver', family:'Silver'},
-  {match:'green', family:'Green'}
+  ['testa di moro','Brown'],['dusty pink','Pink'],['flame red','Red'],
+  ['burnt sienna','Brown'],['maroon','Red'],['carmine','Red'],
+  ['oxblood','Red'],['bordeaux','Red'],['burgundy','Red'],['wine','Red'],
+  ['rust','Orange'],['terracotta','Orange'],['coral','Orange'],
+  ['red','Red'],['pink','Pink'],['cognac','Brown'],['cuoio','Brown'],
+  ['sienna','Brown'],['camel','Brown'],['taupe','Brown'],['brown','Brown'],
+  ['navy','Blue'],['midnight blue','Blue'],['petrol blue','Blue'],
+  ['petrol','Blue'],['royal blue','Blue'],['sky blue','Blue'],
+  ['powder blue','Blue'],['baby blue','Blue'],['blue','Blue'],
+  ['charcoal','Grey'],['smoke grey','Grey'],['stone grey','Grey'],
+  ['grey','Grey'],['gray','Grey'],['tan','Tan'],['sand','Tan'],
+  ['beige','Beige'],['black','Black'],['butter','Yellow'],['mustard','Yellow'],
+  ['yellow','Yellow'],['gold','Yellow'],['white','White'],['silver','Silver'],
+  ['green','Green'],['forest green','Green'],['olive','Green'],
+  ['sage','Green'],['mint','Green'],['teal','Green'],['purple','Purple'],
+  ['violet','Purple'],['lilac','Purple'],['lavender','Purple'],['orange','Orange']
 ];
 
-const RECOGNIZED_PHRASES = [
-  'TESTA DI MORO',
-  'DUSTY PINK',
-  'BURNT SIENNA',
-  'FLAME RED',
-  'NAVY BLUE',
-  'OFF WHITE'
+/* Semantic fashion/vendor vocabulary. Each entry has a canonical customer
+   name, family and a confidence contribution. */
+const SENSE_MAP = [
+  {terms:['blu notte','blunotte','midnight blue','bleu nuit','navy blue'], name:'Midnight Blue', family:'Blue', score:98},
+  {terms:['blu marino','blue marine','marine','navy'], name:'Navy', family:'Blue', score:98},
+  {terms:['petrolio','petrol','petrol blue'], name:'Petrol Blue', family:'Blue', score:96},
+  {terms:['azzurro','sky blue','celeste'], name:'Sky Blue', family:'Blue', score:96},
+  {terms:['royal blue','bluette'], name:'Royal Blue', family:'Blue', score:97},
+  {terms:['powder blue'], name:'Powder Blue', family:'Blue', score:97},
+  {terms:['blu'], name:'Blue', family:'Blue', score:95},
+
+  {terms:['verde bosco','forest green'], name:'Forest Green', family:'Green', score:98},
+  {terms:['verde oliva','olive'], name:'Olive', family:'Green', score:97},
+  {terms:['verde salvia','sage'], name:'Sage', family:'Green', score:97},
+  {terms:['mint'], name:'Mint', family:'Green', score:96},
+  {terms:['teal'], name:'Teal', family:'Green', score:96},
+
+  {terms:['cipria','powder pink'], name:'Powder Pink', family:'Pink', score:97},
+  {terms:['rosa antico','antique pink'], name:'Antique Pink', family:'Pink', score:97},
+  {terms:['dusty pink'], name:'Dusty Pink', family:'Pink', score:99},
+  {terms:['rosa'], name:'Pink', family:'Pink', score:95},
+
+  {terms:['bordeaux','burgundy','wine'], name:'Bordeaux', family:'Red', score:97},
+  {terms:['rosso'], name:'Red', family:'Red', score:96},
+  {terms:['oxblood'], name:'Oxblood', family:'Red', score:98},
+  {terms:['carmine'], name:'Carmine', family:'Red', score:98},
+  {terms:['coral'], name:'Coral', family:'Orange', score:97},
+
+  {terms:['testa di moro','t.moro'], name:'Testa Di Moro', family:'Brown', score:99},
+  {terms:['cuoio'], name:'Cuoio', family:'Brown', score:98},
+  {terms:['cognac'], name:'Cognac', family:'Brown', score:98},
+  {terms:['sabbia','sand'], name:'Sand', family:'Tan', score:97},
+  {terms:['camel'], name:'Camel', family:'Brown', score:97},
+  {terms:['taupe'], name:'Taupe', family:'Brown', score:97},
+  {terms:['burnt sienna'], name:'Burnt Sienna', family:'Brown', score:98},
+  {terms:['sienna'], name:'Sienna', family:'Brown', score:97},
+  {terms:['ruggine','rust'], name:'Rust', family:'Orange', score:97},
+
+  {terms:['grigio fumo','smoke grey','smoke gray'], name:'Smoke Grey', family:'Grey', score:98},
+  {terms:['antracite','anthracite'], name:'Anthracite', family:'Grey', score:98},
+  {terms:['charcoal'], name:'Charcoal', family:'Grey', score:98},
+  {terms:['grigio','gris','grey','gray'], name:'Grey', family:'Grey', score:96},
+
+  {terms:['panna','cream','crema'], name:'Cream', family:'Off White', score:97},
+  {terms:['avorio','ivory'], name:'Ivory', family:'Off White', score:98},
+  {terms:['ecru','écru'], name:'Ecru', family:'Off White', score:98},
+  {terms:['champagne'], name:'Champagne', family:'Off White', score:97},
+  {terms:['bone'], name:'Bone', family:'Off White', score:97},
+  {terms:['bianco','blanc','white'], name:'White', family:'White', score:96},
+  {terms:['nero','noir','black'], name:'Black', family:'Black', score:97},
+  {terms:['argento','silver'], name:'Silver', family:'Silver', score:97},
+  {terms:['oro','gold'], name:'Gold', family:'Yellow', score:97},
+  {terms:['giallo','yellow'], name:'Yellow', family:'Yellow', score:96},
+  {terms:['verde','green'], name:'Green', family:'Green', score:96},
+  {terms:['arancio','arancione','orange'], name:'Orange', family:'Orange', score:96},
+  {terms:['viola','violet','purple'], name:'Purple', family:'Purple', score:96},
+  {terms:['lilla','lilac'], name:'Lilac', family:'Purple', score:96}
 ];
 
-function toTitleCase(str){
-  return str.toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+const MODIFIERS = {
+  'light':'Light','pale':'Pale','dark':'Dark','deep':'Deep','bright':'Bright',
+  'soft':'Soft','dusty':'Dusty','muted':'Muted','pastel':'Pastel',
+  'vintage':'Vintage','washed':'Washed','smoke':'Smoke','smoky':'Smoky',
+  'neon':'Neon','powder':'Powder','burnt':'Burnt','warm':'Warm','cool':'Cool'
+};
+
+const COMPOUNDS = [
+  'TESTA DI MORO','DUSTY PINK','BURNT SIENNA','FLAME RED','NAVY BLUE',
+  'OFF WHITE','MIDNIGHT BLUE','POWDER BLUE','POWDER PINK','FOREST GREEN',
+  'SMOKE GREY','SMOKE GRAY','PETROL BLUE','ROYAL BLUE','ANTIQUE PINK',
+  'BURNED SIENNA'
+];
+
+const LANG_ALIASES = {
+  'NERO':'BLACK','BIANCO':'WHITE','ROSSO':'RED','BLU':'BLUE','VERDE':'GREEN',
+  'GIALLO':'YELLOW','MARRONE':'BROWN','GRIGIO':'GREY','ROSA':'PINK',
+  'VIOLA':'PURPLE','ARANCIO':'ORANGE','ORO':'GOLD','ARGENTO':'SILVER',
+  'NOIR':'BLACK','BLANC':'WHITE','ROUGE':'RED','VERT':'GREEN','JAUNE':'YELLOW',
+  'GRIS':'GREY','MARRON':'BROWN','AZUL':'BLUE','BLANCO':'WHITE','NEGRO':'BLACK',
+  'AMARILLO':'YELLOW','SCHWARZ':'BLACK','WEISS':'WHITE','ROT':'RED',
+  'BLAU':'BLUE','GRAU':'GREY','BRAUN':'BROWN','GELB':'YELLOW'
+};
+
+function titleCase(s){
+  return s.toLowerCase().replace(/\b[\p{L}]/gu,c=>c.toUpperCase());
 }
-
-function processColorRules(rawInput){
-  if(!rawInput || !rawInput.trim()){
-    return {facing:'—', family:'—', charLen:0, found:false};
+function normalizeUnicode(s){
+  return s.normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+}
+function cleanPunctuation(s){
+  return s.replace(/[-/\\,.#()"'`_+:;]/g,' ').replace(/\s+/g,' ').trim();
+}
+function isCodeToken(t){
+  return /^\d+$/.test(t) || /\d/.test(t) || /^[A-Z]{1,2}\d+[A-Z0-9]*$/i.test(t);
+}
+function stripNoise(text){
+  let t=text.replace(/\bNude\b/gi,'Tan').replace(/&/g,' and ');
+  t=cleanPunctuation(t);
+  const tokens=t.split(/\s+/).filter(Boolean);
+  const out=[];
+  for(let token of tokens){
+    const upper=token.toUpperCase();
+    if(isCodeToken(token)) continue;
+    if(token.length===1 && /[A-Za-z]/.test(token)) continue;
+    if(NOISE_WORDS.has(upper)) continue;
+    if(COLOR_MAP[upper]) token=COLOR_MAP[upper];
+    out.push(token);
   }
-
-  /* 1. Break multi-segment vendor input */
-  const segments = rawInput
-    .split(/\|+/)
-    .map(s => s.trim())
-    .filter(Boolean);
-
-  const cleanSegments = segments.map(seg => {
-    let text = seg
-      .replace(/\bNude\b/gi, 'Tan')
-      .replace(/&/g, 'and');
-
-    /*
-      Apply known dotted abbreviations before punctuation is stripped.
-      This preserves T.MORO -> Testa Di Moro.
-    */
-    Object.keys(COLOR_MAP).forEach(key => {
-      const escaped = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      text = text.replace(new RegExp(`\\b${escaped}\\b`, 'gi'), COLOR_MAP[key]);
-    });
-
-    text = text.replace(/[-/\\,.#()"'`_]/g, ' ');
-
-    const tokens = text.split(/\s+/).filter(Boolean);
-    const validTokens = [];
-
-    for(let token of tokens){
-      const upper = token.toUpperCase();
-
-      /* Strip digits / dimensions / years / height codes */
-      if(/^\d+$/.test(token) || /\d/.test(token)) continue;
-
-      /* Strip single letter tokens */
-      if(token.length === 1 && /[A-Za-z]/.test(token)) continue;
-
-      /* Strip construction/material/factory noise */
-      if(NOISE_WORDS.has(upper)) continue;
-
-      /* Translate remaining abbreviations */
-      if(COLOR_MAP[upper]){
-        token = COLOR_MAP[upper];
-      }
-
-      validTokens.push(token);
-    }
-
-    return validTokens.join(' ');
-  }).filter(Boolean);
-
-  const fullText = cleanSegments.join(' ');
-  let upperText = fullText.toUpperCase();
-
-  /*
-    2. Preserve recognized compound color phrases before
-       extracting individual words.
-  */
-  const extractedColors = [];
-
-  RECOGNIZED_PHRASES.forEach(phrase => {
-    if(upperText.includes(phrase) && !extractedColors.includes(phrase)){
-      extractedColors.push(phrase);
-      upperText = upperText.replace(
-        new RegExp(phrase.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'), 'g'),
-        ' '
-      );
-    }
-  });
-
-  /* Extract remaining color/name units */
-  upperText.split(/\s+/)
-    .filter(Boolean)
-    .forEach(word => {
-      if(!extractedColors.includes(word)){
-        extractedColors.push(word);
-      }
-    });
-
-  /* Maximum two core color units */
-  let coreColors = extractedColors.slice(0,2);
-
-  /*
-    Avoid duplicate units such as:
-    NERO ... || NERO ...
-    while preserving the two-unit maximum.
-  */
-  coreColors = coreColors.filter((value, index, arr) =>
-    arr.indexOf(value) === index
-  ).slice(0,2);
-
-  let finalFacing = toTitleCase(coreColors.join(' '));
-
-  /* Hard 30-character limit */
-  if(finalFacing.length > 30){
-    const words = finalFacing.split(' ');
-    while(words.join(' ').length > 30 && words.length){
-      words.pop();
-    }
-    finalFacing = words.join(' ');
-  }
-
-  if(!finalFacing){
-    return {facing:'—', family:'Other', charLen:0, found:false};
-  }
-
-  /* 3. Color family */
-  const lowerFacing = finalFacing.toLowerCase();
-  let familyString = 'Other';
-
-  const isOffWhite = [...OFF_WHITE_TERMS]
-    .some(term => lowerFacing.includes(term));
-
-  if(isOffWhite){
-    familyString = 'Off White';
-  }else{
-    for(const rule of FAMILY_RULES){
-      if(lowerFacing.includes(rule.match)){
-        familyString = rule.family;
-        break;
+  return out.join(' ');
+}
+function findSense(text){
+  const normalized=normalizeUnicode(text).toLowerCase();
+  let best=null;
+  for(const item of SENSE_MAP){
+    for(const term of item.terms){
+      const nt=normalizeUnicode(term).toLowerCase();
+      if(normalized.includes(nt)){
+        const exactBonus=normalized.trim()===nt ? 3 : 0;
+        const score=item.score+exactBonus+(nt.includes(' ') ? 1 : 0);
+        if(!best || score>best.score || (score===best.score && nt.length>best.term.length)){
+          best={...item,term};
+        }
       }
     }
+  }
+  return best;
+}
+function familyFromFacing(facing){
+  const lower=normalizeUnicode(facing).toLowerCase();
+  for(const term of OFF_WHITE_TERMS){
+    if(lower.includes(normalizeUnicode(term).toLowerCase())) return 'Off White';
+  }
+  for(const [match,fam] of FAMILY_RULES){
+    if(lower.includes(normalizeUnicode(match).toLowerCase())) return fam;
+  }
+  return 'Other';
+}
+function legacyExtract(raw){
+  let segments=raw.split(/\|+/).map(s=>s.trim()).filter(Boolean);
+  let cleanSegments=segments.map(stripNoise).filter(Boolean);
+  let fullText=cleanSegments.join(' ');
+  let upper=normalizeUnicode(fullText).toUpperCase();
+
+  const extracted=[];
+  for(const phrase of COMPOUNDS){
+    const p=normalizeUnicode(phrase).toUpperCase();
+    if(upper.includes(p) && !extracted.includes(phrase)){
+      extracted.push(phrase);
+      upper=upper.replace(new RegExp(p.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'g'),' ');
+    }
+  }
+  for(const word of upper.split(/\s+/).filter(Boolean)){
+    if(!extracted.includes(word)) extracted.push(word);
+  }
+
+  let final=titleCase(extracted.slice(0,2).join(' '));
+  if(final.length>30){
+    const words=final.split(' ');
+    while(words.join(' ').length>30 && words.length) words.pop();
+    final=words.join(' ');
+  }
+  return final || '—';
+}
+function normalizeKnownWords(text){
+  let s=normalizeUnicode(text).toUpperCase();
+  const replacements=Object.entries(LANG_ALIASES).sort((a,b)=>b[0].length-a[0].length);
+  for(const [from,to] of replacements){
+    s=s.replace(new RegExp('\\b'+from.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'\\b','g'),to);
+  }
+  return s;
+}
+function senseFacing(raw){
+  const cleaned=stripNoise(raw);
+  const normalized=normalizeKnownWords(cleaned);
+  const candidates=[];
+
+  for(const item of SENSE_MAP){
+    for(const term of item.terms){
+      const nt=normalizeKnownWords(term);
+      if(normalized.toLowerCase().includes(nt.toLowerCase())){
+        candidates.push({item,term,score:item.score+(nt.includes(' ')?2:0)});
+      }
+    }
+  }
+  candidates.sort((a,b)=>b.score-a.score || b.term.length-a.term.length);
+
+  const chosen=[];
+  for(const c of candidates){
+    const already=chosen.some(x=>x.item.family===c.item.family || x.term.toLowerCase().includes(c.term.toLowerCase()));
+    if(!already) chosen.push(c);
+    if(chosen.length===2) break;
+  }
+
+  if(!chosen.length) return null;
+
+  let names=chosen.map(x=>x.item.name);
+  const modifierWords=[];
+  const low=normalizeUnicode(cleaned).toLowerCase();
+  for(const [word,canonical] of Object.entries(MODIFIERS)){
+    if(low.includes(word) && !names.some(n=>n.toLowerCase().includes(word))){
+      modifierWords.push(canonical);
+    }
+  }
+  if(modifierWords.length && names.length===1 && !names[0].toLowerCase().startsWith(modifierWords[0].toLowerCase())){
+    names[0]=modifierWords[0]+' '+names[0];
+  }
+
+  let facing=names.join(' ');
+  if(facing.length>30){
+    const parts=facing.split(' ');
+    while(parts.join(' ').length>30) parts.pop();
+    facing=parts.join(' ');
   }
 
   return {
-    facing: finalFacing,
-    family: familyString,
-    charLen: finalFacing.length,
-    found:true
+    facing:facing || '—',
+    family:chosen[0].item.family,
+    confidence:Math.min(99,Math.max(...chosen.map(x=>x.score))),
+    term:chosen[0].term,
+    candidates:chosen
   };
 }
 
-/* ------------------------- UI ------------------------- */
-
-const query = document.getElementById('query');
-const result = document.getElementById('result');
-const facing = document.getElementById('facing');
-const family = document.getElementById('family');
-const copyFacingButton = document.getElementById('copyFacingOption');
-const copyFamilyButton = document.getElementById('copyFamilyOption');
-
-function showLookup(value){
-  const res = processColorRules(value);
-
-  if(!value.trim()){
-    result.classList.add('hidden');
-    facing.textContent = '';
-    family.textContent = '';
-    copyFacingButton.disabled = true;
-    copyFamilyButton.disabled = true;
-    return;
+function processColorRules(rawInput, mode='sense'){
+  if(!rawInput || !rawInput.trim()){
+    return {facing:'—',family:'—',confidence:0,charLen:0,explanation:'Waiting for input.',detected:'none'};
   }
 
-  result.classList.remove('hidden');
-  facing.textContent = res.facing;
-  family.textContent = res.family;
-  document.getElementById('charCount').textContent =
-    `${res.charLen}/30 chars`;
+  const original=rawInput.trim();
+  const legacy=legacyExtract(original);
+  const sense=senseFacing(original);
 
-  const usable = res.found && res.facing !== '—';
-  copyFacingButton.disabled = !usable;
-  copyFamilyButton.disabled = !usable;
-}
+  let facing=legacy;
+  let family=familyFromFacing(facing);
+  let confidence=70;
+  let detected='legacy rule';
+  let reasons=[];
 
-query.addEventListener('input', () => showLookup(query.value));
-
-query.addEventListener('keydown', e => {
-  if(e.key === 'Escape'){
-    query.value = '';
-    showLookup('');
-  }
-
-  if(e.key === 'Enter' && !e.shiftKey){
-    const res = processColorRules(query.value);
-    if(res.found){
-      copyValue(res.facing, copyFacingButton);
+  if(mode==='strict'){
+    confidence=legacy==='—'?0:92;
+    detected='strict legacy rules';
+    reasons.push('legacy normalization rules applied');
+  }else if(mode==='smart'){
+    if(sense){
+      facing=sense.facing; family=sense.family; confidence=sense.confidence;
+      detected='semantic vocabulary';
+      reasons.push(`recognized "${sense.term}"`);
+    }else{
+      confidence=legacy==='—'?0:82;
+      detected='legacy + normalization';
+      reasons.push('legacy rules applied');
+    }
+  }else{
+    if(sense){
+      facing=sense.facing; family=sense.family; confidence=sense.confidence;
+      detected='sense engine';
+      reasons.push(`recognized "${sense.term}"`);
+      if(sense.candidates.length>1) reasons.push('resolved up to two color units');
+    }else if(legacy!=='—'){
+      confidence=80; detected='legacy fallback'; reasons.push('no semantic phrase matched; legacy rules retained');
     }
   }
-});
 
-/* Tabs */
-document.querySelectorAll('.tab').forEach(tab => {
-  tab.addEventListener('click', () => {
-    document.querySelectorAll('.tab')
-      .forEach(x => x.classList.remove('active'));
+  if(facing==='—'){
+    family='Other'; confidence=0;
+    reasons.push('no recognized color unit');
+  }
 
-    document.querySelectorAll('.panel')
-      .forEach(x => x.classList.add('hidden'));
+  if(rawInput.includes('|')) reasons.push('split supplier pipe segments');
+  if(/\d/.test(rawInput)) reasons.push('removed numeric/style codes');
+  if(/[\/\\#()_,.-]/.test(rawInput)) reasons.push('normalized supplier punctuation');
 
-    tab.classList.add('active');
-    document.getElementById(tab.dataset.panel).classList.remove('hidden');
+  const normalized=normalizeUnicode(rawInput).toLowerCase();
+  const noiseFound=[...NOISE_WORDS].filter(w=>normalized.includes(w.toLowerCase()));
+  if(noiseFound.length) reasons.push(`removed supplier noise (${noiseFound.slice(0,4).join(', ')})`);
+
+  return {
+    facing,
+    family,
+    confidence,
+    charLen:facing==='—'?0:facing.length,
+    detected,
+    explanation:reasons.length ? reasons.join(' · ') : 'normalized color',
+    term:sense?.term || ''
+  };
+}
+
+/* ---------------- UI ---------------- */
+let mode='sense';
+let lastSingle={facing:'—',family:'—'};
+const $=id=>document.getElementById(id);
+
+function setTime(){
+  $('time').textContent=new Date().toLocaleString();
+}
+setTime();
+
+document.querySelectorAll('.tab').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+    btn.classList.add('active');
+    $(btn.dataset.tab).classList.add('active');
   });
 });
 
-/* Clipboard with fallback */
-async function copyValue(value, button){
-  if(!value || value === '—' || value === 'not found') return;
+document.querySelectorAll('.mode').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.mode').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    mode=btn.dataset.mode;
+    runSingle();
+  });
+});
 
-  try{
-    await navigator.clipboard.writeText(value);
-  }catch(err){
-    const area = document.createElement('textarea');
-    area.value = value;
-    area.style.position = 'fixed';
-    area.style.opacity = '0';
-    document.body.appendChild(area);
-    area.select();
-    document.execCommand('copy');
-    area.remove();
-  }
-
-  if(button){
-    const original = button.textContent;
-    button.textContent = 'copied ✓';
-    button.classList.add('is-copied');
-
-    setTimeout(() => {
-      button.textContent = original;
-      button.classList.remove('is-copied');
-    }, 1100);
+function copyText(text,button){
+  if(!text || text==='—') return;
+  const done=()=>{
+    const old=button.textContent;
+    button.textContent='copied ✓';
+    setTimeout(()=>button.textContent=old,900);
+  };
+  if(navigator.clipboard && window.isSecureContext){
+    navigator.clipboard.writeText(text).then(done);
+  }else{
+    const ta=document.createElement('textarea');
+    ta.value=text;document.body.appendChild(ta);ta.select();
+    try{document.execCommand('copy');done()}catch(e){}
+    ta.remove();
   }
 }
 
-copyFacingButton.onclick = () => {
-  copyValue(facing.textContent, copyFacingButton);
-};
-
-copyFamilyButton.onclick = () => {
-  copyValue(family.textContent, copyFamilyButton);
-};
-
-/* ------------------------- Batch ------------------------- */
-
-function renderBatch(){
-  const input = document.getElementById('batchInput').value;
-
-  const rows = input
-    .split(/\r?\n/)
-    .map(x => x.trim())
-    .filter(Boolean);
-
-  const tbody = document.getElementById('batchRows');
-
-  tbody.innerHTML = rows.map((raw, index) => {
-    const res = processColorRules(raw);
-
-    return `<tr>
-      <td>${index + 1}</td>
-      <td>${escapeHtml(raw)}</td>
-      <td>${escapeHtml(res.facing)}</td>
-      <td>${escapeHtml(res.family)}</td>
-    </tr>`;
-  }).join('');
-
-  document.getElementById('batchTable')
-    .classList.toggle('hidden', rows.length === 0);
-
-  const matches = rows
-    .map(raw => processColorRules(raw))
-    .filter(res => res.found && res.facing !== '—');
-
-  document.getElementById('batchCopyFacing').disabled = matches.length === 0;
-  document.getElementById('batchCopyFamily').disabled = matches.length === 0;
+function runSingle(){
+  const raw=$('lookupInput').value;
+  const r=processColorRules(raw,mode);
+  lastSingle=r;
+  $('facing').textContent=r.facing;
+  $('family').textContent=r.family;
+  $('charCount').textContent=`${r.charLen}/30 chars`;
+  $('detected').textContent=`detected ${r.detected}`;
+  const c=$('confidence');
+  c.textContent=`confidence ${r.confidence}%`;
+  c.className='badge '+(r.confidence>=90?'confidence-high':r.confidence>=75?'confidence-mid':'confidence-low');
+  $('explanation').innerHTML=`<strong>interpretation:</strong> ${escapeHtml(r.explanation)}${r.term?`<br><strong>matched:</strong> ${escapeHtml(r.term)}`:''}`;
+  $('copyFacing').disabled=r.facing==='—';
+  $('copyFamily').disabled=r.facing==='—';
+}
+function escapeHtml(s){
+  return s.replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 }
 
-document.getElementById('runBatch').onclick = renderBatch;
+$('lookupInput').addEventListener('input',runSingle);
+$('copyFacing').addEventListener('click',()=>copyText(lastSingle.facing,$('copyFacing')));
+$('copyFamily').addEventListener('click',()=>copyText(lastSingle.family,$('copyFamily')));
 
-document.getElementById('clearBatch').onclick = () => {
-  document.getElementById('batchInput').value = '';
-  document.getElementById('batchRows').innerHTML = '';
-  document.getElementById('batchTable').classList.add('hidden');
-  document.getElementById('batchCopyFacing').disabled = true;
-  document.getElementById('batchCopyFamily').disabled = true;
-};
-
-function getBatchResults(){
-  const input = document.getElementById('batchInput').value;
-
-  return input
-    .split(/\r?\n/)
-    .map(x => x.trim())
-    .filter(Boolean)
-    .map(raw => ({
-      raw,
-      ...processColorRules(raw)
-    }))
-    .filter(x => x.found && x.facing !== '—');
+function getBatchData(){
+  return [...document.querySelectorAll('#batchBody tr')].map(tr=>{
+    const c=tr.querySelectorAll('td');
+    return {raw:c[1]?.textContent||'',facing:c[2]?.textContent||'',family:c[3]?.textContent||'',confidence:c[4]?.textContent||''};
+  });
 }
 
-document.getElementById('batchCopyFacing').onclick = () => {
-  const rows = getBatchResults();
-  copyValue(
-    rows.map(x => x.facing).join('\n'),
-    document.getElementById('batchCopyFacing')
-  );
-};
+function runBatch(){
+  const lines=$('batchInput').value.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
+  const tbody=$('batchBody');tbody.innerHTML='';
+  lines.forEach((line,i)=>{
+    const r=processColorRules(line,mode);
+    const tr=document.createElement('tr');
+    [i+1,line,r.facing,r.family,r.confidence+'%'].forEach((value,j)=>{
+      const td=document.createElement('td');
+      td.textContent=value;
+      if(j===2){const b=document.createElement('strong');b.textContent=value;td.textContent='';td.appendChild(b)}
+      tr.appendChild(td);
+    });
+    tbody.appendChild(tr);
+  });
+  $('batchWrap').classList.toggle('hidden',lines.length===0);
+  $('batchCopyFacing').disabled=!lines.length;
+  $('batchCopyFamily').disabled=!lines.length;
+}
+$('runBatch').addEventListener('click',runBatch);
+$('clearBatch').addEventListener('click',()=>{
+  $('batchInput').value='';$('batchBody').innerHTML='';$('batchWrap').classList.add('hidden');
+  $('batchCopyFacing').disabled=true;$('batchCopyFamily').disabled=true;
+});
+$('batchCopyFacing').addEventListener('click',()=>{
+  const rows=getBatchData();copyText(rows.map(r=>r.facing).join('\n'),$('batchCopyFacing'));
+});
+$('batchCopyFamily').addEventListener('click',()=>{
+  const rows=getBatchData();copyText(rows.map(r=>r.family).join('\n'),$('batchCopyFamily'));
+});
+$('batchInput').addEventListener('keydown',e=>{
+  if(e.ctrlKey && e.key==='Enter'){e.preventDefault();runBatch()}
+});
 
-document.getElementById('batchCopyFamily').onclick = () => {
-  const rows = getBatchResults();
-  copyValue(
-    rows.map(x => x.family).join('\n'),
-    document.getElementById('batchCopyFamily')
-  );
-};
+$('refresh').addEventListener('click',()=>{
+  setTime();
+  $('refresh').textContent='↻ refreshed';
+  setTimeout(()=>$('refresh').textContent='↻ refresh',900);
+});
+$('linkSource').addEventListener('click',()=>{
+  const url=$('sourceUrl').value.trim();
+  if(!url){alert('Paste a published CSV endpoint first.');return}
+  alert('CSV endpoint saved for this session. The deterministic color engine remains the final normalization layer.');
+});
 
-document.getElementById('batchInput').addEventListener('keydown', e => {
-  if(e.ctrlKey && e.key === 'Enter'){
-    e.preventDefault();
-    renderBatch();
-  }
-
-  if(e.key === 'Escape'){
-    document.getElementById('clearBatch').click();
+$('lookupInput').addEventListener('keydown',e=>{
+  if(e.key==='Escape'){e.preventDefault();$('lookupInput').value='';runSingle()}
+  if(e.key==='Enter'){e.preventDefault();copyText(lastSingle.facing,$('copyFacing'))}
+});
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape' && document.activeElement===document.body){
+    $('lookupInput').value='';runSingle();
   }
 });
 
-/* ------------------------- Sources ------------------------- */
-
-document.getElementById('addSource').onclick = () => {
-  const input = document.getElementById('sourceUrl');
-
-  if(!input.value.trim()) return;
-
-  const li = document.createElement('li');
-  li.innerHTML =
-    escapeHtml(input.value) +
-    " <span style='float:right;color:#35f27d'>added</span>";
-
-  document.getElementById('sourceList').appendChild(li);
-  input.value = '';
-};
-
-/* Refresh */
-document.getElementById('refresh').onclick = () => {
-  const button = document.getElementById('refresh');
-  button.textContent = '↻ refreshing…';
-
-  setTimeout(() => {
-    button.textContent = '↻ refresh';
-  }, 500);
-};
-
-/* Timestamp */
-document.getElementById('rebuilt').textContent =
-  new Date().toLocaleString();
-
-/* Escape HTML for batch/source display */
-function escapeHtml(value){
-  return String(value).replace(/[&<>"']/g, c => ({
-    '&':'&amp;',
-    '<':'&lt;',
-    '>':'&gt;',
-    '"':'&quot;',
-    "'":'&#039;'
-  }[c]));
-}
+runSingle();
 </script>
 </body>
 </html>
+  
