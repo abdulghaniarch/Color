@@ -1,464 +1,862 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>nuorder — color-lookup</title>
-  <style>
-    :root {
-      --bg: #090d16;
-      --card-bg: #0f172a;
-      --border: #1e293b;
-      --text: #cbd5e1;
-      --dim: #64748b;
-      --green: #4ade80;
-      --purple: #c084fc;
-      --cyan: #38bdf8;
-      --red: #ff5f56;
-      --yellow: #ffbd2e;
-      --btn-bg: #1e293b;
-      --btn-hover: #334155;
-    }
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>nuorder — color-lookup</title>
+<style>
+:root{
+  --bg:#05080b;
+  --window:#0a0f15;
+  --bar:#141b27;
+  --bar2:#151d2a;
+  --border:#202b3a;
+  --border2:#293548;
+  --text:#8b9bb4;
+  --text-hi:#e9eef7;
+  --cyan:#20d7e8;
+  --green:#35f27d;
+  --purple:#b9a7ff;
+  --yellow:#ffbd3b;
+  --red:#ff5d63;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono",monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:var(--bg)}
+body{
+  color:var(--text);
+  font-family:var(--mono);
+  display:flex;
+  justify-content:center;
+  padding:32px 24px 42px;
+}
+button,input,textarea{font:inherit}
+.app{width:min(1230px,100%)}
+.window{
+  overflow:hidden;
+  border:1px solid #202a38;
+  border-radius:14px;
+  background:var(--window);
+  box-shadow:0 24px 80px rgba(0,0,0,.5);
+}
+.titlebar{
+  height:59px;
+  background:linear-gradient(#151d29,#131a25);
+  border-bottom:1px solid #242f40;
+  display:flex;
+  align-items:center;
+  padding:0 20px;
+  gap:9px;
+}
+.dot{width:16px;height:16px;border-radius:50%}
+.red{background:#ff5b61}.yellow{background:#ffbd2e}.green{background:#28c840}
+.title{
+  margin-left:11px;
+  color:#657793;
+  font-size:17px;
+  letter-spacing:.01em;
+}
+.body{padding:28px 26px 30px}
+.command{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  color:var(--text-hi);
+  font-weight:700;
+  font-size:18px;
+  line-height:1.3;
+}
+.prompt{color:var(--green)}
+.flag{color:var(--purple)}
+.status{
+  margin-top:10px;
+  display:flex;
+  align-items:center;
+  gap:9px;
+  font-size:17px;
+  min-height:28px;
+}
+.status .num,.status .families{color:var(--cyan)}
+.status .time{color:var(--green)}
+.refresh{
+  margin-left:2px;
+  background:#0d131c;
+  color:#70829f;
+  border:1px solid #334155;
+  border-radius:7px;
+  padding:7px 12px;
+  cursor:pointer;
+}
+.refresh:hover{border-color:#53647c;color:#9baac0}
+.tabs{
+  display:flex;
+  margin-top:26px;
+  border-bottom:1px solid #263141;
+  height:52px;
+}
+.tab{
+  border:0;
+  border-top:1px solid transparent;
+  border-left:1px solid transparent;
+  border-right:1px solid transparent;
+  background:transparent;
+  color:#657793;
+  padding:0 21px;
+  font-size:18px;
+  cursor:pointer;
+}
+.tab.active{
+  color:#28dbe8;
+  background:#0d131d;
+  border-color:#263141;
+  border-bottom-color:#0d131d;
+  border-radius:8px 8px 0 0;
+}
+.panel{padding-top:22px}
+.promptbox{
+  min-height:69px;
+  border:1px solid #263243;
+  border-radius:10px;
+  background:#0d131c;
+  display:flex;
+  align-items:center;
+  padding:0 15px;
+}
+.promptbox .chevron{
+  color:#2ad9e8;
+  font-size:25px;
+  margin-right:10px;
+}
+.promptbox input{
+  flex:1;
+  min-width:0;
+  background:none;
+  border:0;
+  outline:0;
+  color:#c9d4e5;
+  font-size:22px;
+}
+.promptbox input::placeholder{color:#42536d}
+.lookup-content{display:none}
+.lookup-content.active{display:block}
+.result{
+  margin-top:18px;
+  border-top:1px solid #1d2937;
+  padding-top:16px;
+}
+ .result-meta{
+  margin-top:10px;
+  color:#53647d;
+  font-size:13px;
+  text-align:right;
+}
+.result-row{
+  display:grid;
+  grid-template-columns:270px 1fr auto;
+  align-items:center;
+  gap:15px;
+  min-height:52px;
+}
+.key{color:#71829b;font-size:15px}
+.value{color:#e7edf7;font-size:18px}
+.copy{
+  background:#0d141e;
+  border:1px solid #2a3749;
+  color:#8394ad;
+  border-radius:6px;
+  padding:7px 10px;
+  cursor:pointer;
+  font-size:13px;
+}
+.copy:hover{color:#cbd5e4;border-color:#46566e}
+.lookup-copy-options{
+  margin-top:14px;
+  display:flex;
+  gap:9px;
+  flex-wrap:wrap;
+}
+.lookup-copy-options .copy-main:disabled{
+  opacity:.48;
+  cursor:not-allowed;
+}
+.lookup-copy-options .copy-main:not(:disabled){
+  opacity:1;
+}
+.copy-actions{
+  margin-top:16px;
+  display:flex;
+  align-items:center;
+  gap:9px;
+  flex-wrap:wrap;
+}
+.copy-main{
+  min-height:37px;
+  padding:7px 12px;
+  border-radius:6px;
+  font-size:15px;
+  color:#7f91ad;
+  background:#101822;
+  border:1px solid #2d3b4f;
+  white-space:nowrap;
+}
+.copy-main:hover{
+  color:#22d9e8;
+  border-color:#3b506a;
+  background:#111c28;
+}
+.copy.is-copied{
+  color:#35f27d;
+  border-color:#286b45;
+  background:#0e1b16;
+}
+.command-copy{
+  margin-top:14px;
+  border:1px solid #202c3d;
+  background:#0a1018;
+  padding:14px;
+  border-radius:7px;
+  color:#6d7e97;
+}
+.hidden{display:none!important}
+.batch textarea{
+  width:100%;
+  min-height:180px;
+  resize:vertical;
+  background:#0d131c;
+  border:1px solid #263243;
+  border-radius:10px;
+  color:#dce5f2;
+  padding:16px;
+  outline:none;
+}
+.sources{display:none}
+.statusbar{
+  height:51px;
+  background:#151d2a;
+  border-top:1px solid #222e3e;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:0 21px;
+  font-size:16px;
+}
+.help{
+  text-align:center;
+  padding-top:21px;
+  color:#52627b;
+  font-size:16px;
+}
+kbd{
+  border:1px solid #314056;
+  background:#141e2b;
+  border-radius:4px;
+  padding:4px 7px;
+  color:#71839e;
+}
+.batch-controls{margin-top:12px;display:flex;gap:8px}
+.batch-copy-options{
+  margin-top:16px;
+  display:flex;
+  gap:9px;
+  flex-wrap:wrap;
+}
+.batch-copy-options .copy-main:disabled{
+  opacity:.48;
+  cursor:not-allowed;
+}
 
-    * { box-sizing: border-box; }
-
-    body {
-      background-color: var(--bg);
-      color: var(--text);
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-      margin: 0;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-    }
-
-    .terminal {
-      width: 100%;
-      max-width: 900px;
-      background: var(--card-bg);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.75);
-      overflow: hidden;
-    }
-
-    .title-bar {
-      padding: 12px 16px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 0.85rem;
-      color: var(--dim);
-      border-bottom: 1px solid var(--border);
-    }
-    .dot { width: 11px; height: 11px; border-radius: 50%; }
-    .dot-red { background: var(--red); }
-    .dot-yellow { background: var(--yellow); }
-    .dot-green { background: #27c93f; }
-
-    .content { padding: 24px; }
-    
-    .cmd-line { font-weight: 600; font-size: 1rem; margin-bottom: 8px; }
-    .cmd-green { color: var(--green); }
-    .cmd-purple { color: var(--purple); }
-
-    .sub-bar {
-      font-size: 0.85rem;
-      color: var(--dim);
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 20px;
-    }
-    .sub-bar span { color: var(--cyan); font-weight: bold; }
-    
-    .btn-refresh {
-      background: transparent;
-      border: 1px solid var(--border);
-      color: var(--dim);
-      border-radius: 4px;
-      padding: 2px 8px;
-      font-size: 0.75rem;
-      cursor: pointer;
-      font-family: inherit;
-    }
-    .btn-refresh:hover { color: var(--text); border-color: var(--dim); }
-
-    .tabs {
-      display: flex;
-      gap: 10px;
-      border-bottom: 1px solid var(--border);
-      padding-bottom: 12px;
-      margin-bottom: 20px;
-    }
-    .tab {
-      font-size: 0.9rem;
-      color: var(--dim);
-      cursor: pointer;
-      padding: 6px 14px;
-      border-radius: 4px;
-      user-select: none;
-    }
-    .tab.active {
-      color: var(--cyan);
-      background: #1e293b;
-    }
-
-    .input-box-wrapper {
-      position: relative;
-      margin-bottom: 16px;
-    }
-
-    textarea {
-      width: 100%;
-      height: 160px;
-      background: #090d16;
-      border: 1px solid #1e293b;
-      border-radius: 6px;
-      color: var(--dim);
-      font-family: inherit;
-      font-size: 0.9rem;
-      padding: 14px;
-      outline: none;
-      resize: vertical;
-      line-height: 1.5;
-    }
-    textarea:focus {
-      border-color: #0ea5e9;
-      box-shadow: 0 0 10px rgba(14, 165, 233, 0.15);
-      color: var(--text);
-    }
-
-    .actions-row {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 16px;
-    }
-
-    .btn-cmd {
-      background: var(--btn-bg);
-      border: 1px solid var(--border);
-      color: var(--cyan);
-      padding: 6px 14px;
-      border-radius: 4px;
-      font-family: inherit;
-      font-size: 0.85rem;
-      cursor: pointer;
-      font-weight: 600;
-    }
-    .btn-cmd:hover { background: var(--btn-hover); color: #ffffff; }
-
-    .status-counter {
-      font-size: 0.85rem;
-      color: var(--dim);
-      margin-left: 6px;
-    }
-
-    .export-toolbar {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      margin-bottom: 16px;
-    }
-    .btn-export {
-      background: #1e293b;
-      border: 1px solid var(--border);
-      color: var(--dim);
-      padding: 4px 10px;
-      border-radius: 4px;
-      font-size: 0.78rem;
-      font-family: inherit;
-      cursor: pointer;
-    }
-    .btn-export:hover { color: var(--text); border-color: var(--dim); }
-
-    .table-container {
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      overflow-x: auto;
-      max-height: 320px;
-      overflow-y: auto;
-      background: #090d16;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.85rem;
-      text-align: left;
-    }
-
-    th {
-      background: #0f172a;
-      color: var(--dim);
-      padding: 10px 14px;
-      border-bottom: 1px solid var(--border);
-      position: sticky;
-      top: 0;
-      font-weight: 600;
-    }
-
-    td {
-      padding: 10px 14px;
-      border-bottom: 1px solid #1e293b;
-      color: var(--text);
-    }
-
-    tr:last-child td { border-bottom: none; }
-
-    .col-num { color: var(--dim); width: 40px; }
-    .col-raw { color: var(--dim); }
-    .col-facing { color: #ffffff; font-weight: 600; }
-    .col-family { color: #f59e0b; }
-
-    .hidden { display: none !important; }
-  </style>
+.action{
+  background:#101823;
+  border:1px solid #2b394c;
+  color:#8ea0ba;
+  border-radius:6px;
+  padding:8px 13px;
+  cursor:pointer;
+}
+.table-wrap{margin-top:18px;overflow:auto}
+table{width:100%;border-collapse:collapse}
+th,td{padding:11px;border-bottom:1px solid #202b3a;text-align:left;font-size:14px}
+th{color:#657793;font-weight:400}
+td{color:#a9b6c9}
+.source-list{list-style:none;padding:0;margin:0 0 15px}
+.source-list li{padding:12px;border-bottom:1px solid #202b3a}
+.source-form{display:flex;gap:8px}
+.source-form input{flex:1;background:#0d131c;border:1px solid #263243;border-radius:7px;padding:11px;color:#dce5f2;outline:0}
+@media(max-width:760px){
+  body{padding:12px}
+  .body{padding:20px 16px}
+  .result-row{grid-template-columns:1fr}
+  .statusbar{font-size:12px}
+  .help{font-size:12px}
+  .title{font-size:14px}
+}
+</style>
 </head>
 <body>
+<div class="app">
+  <div class="window">
+    <header class="titlebar">
+      <span class="dot red"></span>
+      <span class="dot yellow"></span>
+      <span class="dot green"></span>
+      <span class="title">nuorder — color-lookup</span>
+    </header>
 
-  <div class="terminal">
-    <div class="title-bar">
-      <span class="dot dot-red"></span>
-      <span class="dot dot-yellow"></span>
-      <span class="dot dot-green"></span>
-      <span style="margin-left: 8px;">nuorder — color-lookup</span>
-    </div>
-
-    <div class="content">
-      <div class="cmd-line">
-        <span class="cmd-green">$ nuorder color-lookup</span> <span class="cmd-purple">--watch</span>
+    <div class="body">
+      <div class="command">
+        <span class="prompt">$</span>
+        <span>nuorder color-lookup</span>
+        <span class="flag">--watch</span>
       </div>
 
-      <div class="sub-bar">
-        indexed <span>116,508</span> colors · <span>14</span> families 
-        <button class="btn-refresh" onclick="location.reload()">↺ refresh</button>
+      <div class="status">
+        <span>indexed</span>
+        <span class="num" id="colorCount">116,508</span>
+        <span>colors</span>
+        <span>·</span>
+        <span class="families" id="familyCount">14</span>
+        <span>families</span>
+        <span>·</span>
+        <span class="time">300ms</span>
+        <button class="refresh" id="refresh">↻ refresh</button>
       </div>
 
-      <!-- Navigation Tabs -->
-      <div class="tabs">
-        <div class="tab" onclick="switchTab('lookup')">lookup</div>
-        <div class="tab active" onclick="switchTab('batch')">batch</div>
-        <div class="tab" onclick="switchTab('sources')">sources</div>
-      </div>
+      <nav class="tabs">
+        <button class="tab active" data-panel="lookup">lookup</button>
+        <button class="tab" data-panel="batch">batch</button>
+        <button class="tab" data-panel="sources">sources</button>
+      </nav>
 
-      <!-- TAB 1: BATCH INTERFACE -->
-      <div id="tabBatch">
-        <div class="cmd-line" style="font-size:0.9rem; margin-bottom:14px;">
-          <span class="cmd-green">$ nuorder color-lookup</span> <span class="cmd-purple">--batch</span> &lt; colors.txt
+      <section class="panel lookup-content active" id="lookup">
+        <div class="promptbox">
+          <span class="chevron">›</span>
+          <input id="query" placeholder="paste raw vendor color" autocomplete="off">
         </div>
 
-        <div class="input-box-wrapper">
-          <textarea id="batchInput" placeholder="paste one raw vendor color per line — a column straight out of Excel works. if you paste several columns, the first one is used"></textarea>
+        <div class="lookup-copy-options" aria-label="Copy options">
+          <button class="copy copy-main" id="copyFacingOption" type="button" disabled>
+            copy facing
+          </button>
+          <button class="copy copy-main" id="copyFamilyOption" type="button" disabled>
+            copy family
+          </button>
         </div>
 
-        <div class="actions-row">
-          <button class="btn-cmd" onclick="runBatchProcess()">run</button>
-          <button class="btn-cmd" style="color:var(--dim);" onclick="clearAll()">clear</button>
-          <span id="counterStatus" class="status-counter">0 rows · 0 matched · 0 missing</span>
+        <div class="result hidden" id="result">
+          <div class="result-row">
+            <span class="key">customer_facing_color</span>
+            <span class="value" id="facing"></span>
+          </div>
+
+          <div class="result-row">
+            <span class="key">color_family</span>
+            <span class="value" id="family"></span>
+          </div>
+
+          <div class="result-meta" id="charCount">0/30 chars</div>
+        </div>
+      </section>
+
+      <section class="panel batch hidden" id="batch">
+        <div class="command" style="margin-bottom:12px;font-size:15px">
+          <span class="prompt">$</span>
+          <span>nuorder color-lookup</span>
+          <span class="flag">--batch</span>
+          <span style="color:#53647d">&lt; colors.txt</span>
+        </div>
+        <textarea id="batchInput" placeholder="paste one raw vendor color per line"></textarea>
+        <div class="batch-controls">
+          <button class="action" id="runBatch">run</button>
+          <button class="action" id="clearBatch">clear</button>
         </div>
 
-        <!-- Export Toolbar -->
-        <div id="exportToolbar" class="export-toolbar hidden">
-          <button class="btn-export" onclick="copyFacingOnly()">copy facing</button>
-          <button class="btn-export" onclick="copyFamilyOnly()">copy family</button>
-          <button class="btn-export" onclick="copyFacingAndFamily()">copy facing + family</button>
-          <button class="btn-export" onclick="copyAllColumns()">copy all columns</button>
-          <button class="btn-export" onclick="copyMissingOnly()">copy missing only</button>
-          <button class="btn-export" onclick="downloadCSV()">download .csv</button>
+        <div class="batch-copy-options" id="batchCopyOptions">
+          <button class="copy copy-main" id="batchCopyFacing" type="button" disabled>copy facing</button>
+          <button class="copy copy-main" id="batchCopyFamily" type="button" disabled>copy family</button>
         </div>
 
-        <!-- Output Results Table -->
-        <div id="tableWrapper" class="table-container hidden">
+        <div class="table-wrap hidden" id="batchTable">
           <table>
-            <thead>
-              <tr>
-                <th class="col-num">#</th>
-                <th>raw_input</th>
-                <th>customer_facing_color</th>
-                <th>color_family</th>
-              </tr>
-            </thead>
-            <tbody id="resultsTbody"></tbody>
+            <thead><tr><th>#</th><th>raw_input</th><th>customer_facing_color</th><th>color_family</th></tr></thead>
+            <tbody id="batchRows"></tbody>
           </table>
         </div>
-      </div>
+      </section>
 
-      <!-- TAB 2: SINGLE LOOKUP INTERFACE -->
-      <div id="tabLookup" class="hidden">
-        <div class="cmd-line" style="font-size:0.9rem; margin-bottom:14px;">
-          <span class="cmd-green">$ nuorder color-lookup</span> <span class="cmd-purple">--single</span>
+      <section class="panel sources hidden" id="sources">
+        <div class="command" style="margin-bottom:18px;font-size:15px">
+          <span class="prompt">$</span>
+          <span>nuorder sources</span>
+          <span class="flag">--list</span>
         </div>
-        <input type="text" id="singleInput" placeholder="paste raw vendor color" style="width:100%; padding:12px; background:#090d16; border:1px solid #1e293b; border-radius:6px; color:#fff; font-family:inherit;" />
-        <button class="btn-cmd" style="margin-top:12px;" onclick="runSingleProcess()">run</button>
-      </div>
-
-      <!-- TAB 3: SOURCES / BACKEND CONFIG -->
-      <div id="tabSources" class="hidden">
-        <div style="font-size:0.85rem; color:var(--dim); margin-bottom:10px;">
-          Google Apps Script Web App Endpoint URL:
+        <ul class="source-list" id="sourceList">
+          <li>built-in color index <span style="float:right;color:#35f27d">active</span></li>
+        </ul>
+        <div class="source-form">
+          <input id="sourceUrl" placeholder="https://… published CSV link">
+          <button class="action" id="addSource">add source</button>
         </div>
-        <input type="text" id="scriptUrlInput" placeholder="Paste Apps Script Web App URL..." style="width:100%; padding:12px; background:#090d16; border:1px solid #1e293b; border-radius:6px; color:#fff; font-family:inherit;" onchange="saveBackendUrl()" />
-        <div id="urlSavedStatus" style="font-size:0.8rem; color:var(--green); margin-top:8px;"></div>
-      </div>
-
+      </section>
     </div>
+
+    <footer class="statusbar">
+      <span>index: <span id="footerCount">116,508 colors</span></span>
+      <span>rebuilt: <span id="rebuilt"></span></span>
+    </footer>
   </div>
 
-  <script>
-    let APPS_SCRIPT_URL = localStorage.getItem("gas_url") || "";
-    document.getElementById("scriptUrlInput").value = APPS_SCRIPT_URL;
+  <div class="help">
+    <kbd>↑</kbd> <kbd>↓</kbd> navigate
+    · <kbd>tab</kbd> complete
+    · <kbd>↵</kbd> copy
+    · <kbd>esc</kbd> clear
+    · <kbd>ctrl</kbd> <kbd>↵</kbd> run batch
+  </div>
+</div>
 
-    let processedData = [];
+<script>
+/* ============================================================
+   NUORDER COLOR CLEANING ENGINE
+   UI = terminal replica
+   Engine = strict multi-stage color normalization rules
+   ============================================================ */
 
-    function saveBackendUrl() {
-      const val = document.getElementById("scriptUrlInput").value.trim();
-      localStorage.setItem("gas_url", val);
-      APPS_SCRIPT_URL = val;
-      document.getElementById("urlSavedStatus").innerText = "✓ Backend URL saved!";
+/* Construction / material / factory noise words */
+const NOISE_WORDS = new Set([
+  'RETE','MIGN','MIGNON','NAP','NAPPA','INGROP','TEMP','FONDO',
+  'CAMOSCIO','VRV','NEW','NW','LIN','SF','TI','DS','BOT','WITH',
+  'S','M','L'
+]);
+
+/* Abbreviations + multilingual vendor terms */
+const COLOR_MAP = {
+  'BLAC':'Black',
+  'WHT':'White',
+  'ROSA':'Pink',
+  'NERO':'Black',
+  'BLK':'Black',
+  'ARGENTO':'Silver',
+  'BIANCO':'White',
+  'MAROON':'Maroon',
+  'BLU':'Blue',
+  'GRY':'Grey',
+  'GRAY':'Grey',
+  'GRN':'Green',
+  'NV':'Navy',
+  'DK':'Dark',
+  'CARM':'Carmine',
+  'BUTT':'Butter',
+  'BUT':'Butter',
+  'T.MORO':'Testa Di Moro',
+  'TMORO':'Testa Di Moro'
+};
+
+const OFF_WHITE_TERMS = new Set([
+  'ivory','cream','off white','offwhite','off-white','bone',
+  'ecru','champagne','vanilla','mascarpone'
+]);
+
+const FAMILY_RULES = [
+  {match:'testa di moro', family:'Brown'},
+  {match:'dusty pink', family:'Pink'},
+  {match:'flame red', family:'Red'},
+  {match:'burnt sienna', family:'Brown'},
+  {match:'maroon', family:'Red'},
+  {match:'carmine', family:'Red'},
+  {match:'oxblood', family:'Red'},
+  {match:'red', family:'Red'},
+  {match:'pink', family:'Pink'},
+  {match:'cognac', family:'Brown'},
+  {match:'cuoio', family:'Brown'},
+  {match:'sienna', family:'Brown'},
+  {match:'camel', family:'Brown'},
+  {match:'brown', family:'Brown'},
+  {match:'navy', family:'Blue'},
+  {match:'blue', family:'Blue'},
+  {match:'charcoal', family:'Grey'},
+  {match:'grey', family:'Grey'},
+  {match:'gray', family:'Grey'},
+  {match:'tan', family:'Tan'},
+  {match:'black', family:'Black'},
+  {match:'butter', family:'Yellow'},
+  {match:'yellow', family:'Yellow'},
+  {match:'gold', family:'Yellow'},
+  {match:'white', family:'White'},
+  {match:'silver', family:'Silver'},
+  {match:'green', family:'Green'}
+];
+
+const RECOGNIZED_PHRASES = [
+  'TESTA DI MORO',
+  'DUSTY PINK',
+  'BURNT SIENNA',
+  'FLAME RED',
+  'NAVY BLUE',
+  'OFF WHITE'
+];
+
+function toTitleCase(str){
+  return str.toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+}
+
+function processColorRules(rawInput){
+  if(!rawInput || !rawInput.trim()){
+    return {facing:'—', family:'—', charLen:0, found:false};
+  }
+
+  /* 1. Break multi-segment vendor input */
+  const segments = rawInput
+    .split(/\|+/)
+    .map(s => s.trim())
+    .filter(Boolean);
+
+  const cleanSegments = segments.map(seg => {
+    let text = seg
+      .replace(/\bNude\b/gi, 'Tan')
+      .replace(/&/g, 'and');
+
+    /*
+      Apply known dotted abbreviations before punctuation is stripped.
+      This preserves T.MORO -> Testa Di Moro.
+    */
+    Object.keys(COLOR_MAP).forEach(key => {
+      const escaped = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      text = text.replace(new RegExp(`\\b${escaped}\\b`, 'gi'), COLOR_MAP[key]);
+    });
+
+    text = text.replace(/[-/\\,.#()"'`_]/g, ' ');
+
+    const tokens = text.split(/\s+/).filter(Boolean);
+    const validTokens = [];
+
+    for(let token of tokens){
+      const upper = token.toUpperCase();
+
+      /* Strip digits / dimensions / years / height codes */
+      if(/^\d+$/.test(token) || /\d/.test(token)) continue;
+
+      /* Strip single letter tokens */
+      if(token.length === 1 && /[A-Za-z]/.test(token)) continue;
+
+      /* Strip construction/material/factory noise */
+      if(NOISE_WORDS.has(upper)) continue;
+
+      /* Translate remaining abbreviations */
+      if(COLOR_MAP[upper]){
+        token = COLOR_MAP[upper];
+      }
+
+      validTokens.push(token);
     }
 
-    function switchTab(name) {
-      document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
-      document.getElementById("tabBatch").classList.add("hidden");
-      document.getElementById("tabLookup").classList.add("hidden");
-      document.getElementById("tabSources").classList.add("hidden");
+    return validTokens.join(' ');
+  }).filter(Boolean);
 
-      if (name === 'batch') {
-        document.querySelectorAll(".tab")[1].classList.add("active");
-        document.getElementById("tabBatch").classList.remove("hidden");
-      } else if (name === 'lookup') {
-        document.querySelectorAll(".tab")[0].classList.add("active");
-        document.getElementById("tabLookup").classList.remove("hidden");
-      } else if (name === 'sources') {
-        document.querySelectorAll(".tab")[2].classList.add("active");
-        document.getElementById("tabSources").classList.remove("hidden");
+  const fullText = cleanSegments.join(' ');
+  let upperText = fullText.toUpperCase();
+
+  /*
+    2. Preserve recognized compound color phrases before
+       extracting individual words.
+  */
+  const extractedColors = [];
+
+  RECOGNIZED_PHRASES.forEach(phrase => {
+    if(upperText.includes(phrase) && !extractedColors.includes(phrase)){
+      extractedColors.push(phrase);
+      upperText = upperText.replace(
+        new RegExp(phrase.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'), 'g'),
+        ' '
+      );
+    }
+  });
+
+  /* Extract remaining color/name units */
+  upperText.split(/\s+/)
+    .filter(Boolean)
+    .forEach(word => {
+      if(!extractedColors.includes(word)){
+        extractedColors.push(word);
+      }
+    });
+
+  /* Maximum two core color units */
+  let coreColors = extractedColors.slice(0,2);
+
+  /*
+    Avoid duplicate units such as:
+    NERO ... || NERO ...
+    while preserving the two-unit maximum.
+  */
+  coreColors = coreColors.filter((value, index, arr) =>
+    arr.indexOf(value) === index
+  ).slice(0,2);
+
+  let finalFacing = toTitleCase(coreColors.join(' '));
+
+  /* Hard 30-character limit */
+  if(finalFacing.length > 30){
+    const words = finalFacing.split(' ');
+    while(words.join(' ').length > 30 && words.length){
+      words.pop();
+    }
+    finalFacing = words.join(' ');
+  }
+
+  if(!finalFacing){
+    return {facing:'—', family:'Other', charLen:0, found:false};
+  }
+
+  /* 3. Color family */
+  const lowerFacing = finalFacing.toLowerCase();
+  let familyString = 'Other';
+
+  const isOffWhite = [...OFF_WHITE_TERMS]
+    .some(term => lowerFacing.includes(term));
+
+  if(isOffWhite){
+    familyString = 'Off White';
+  }else{
+    for(const rule of FAMILY_RULES){
+      if(lowerFacing.includes(rule.match)){
+        familyString = rule.family;
+        break;
       }
     }
+  }
 
-    function clearAll() {
-      document.getElementById("batchInput").value = "";
-      document.getElementById("resultsTbody").innerHTML = "";
-      document.getElementById("tableWrapper").classList.add("hidden");
-      document.getElementById("exportToolbar").classList.add("hidden");
-      document.getElementById("counterStatus").innerText = "0 rows · 0 matched · 0 missing";
-      processedData = [];
+  return {
+    facing: finalFacing,
+    family: familyString,
+    charLen: finalFacing.length,
+    found:true
+  };
+}
+
+/* ------------------------- UI ------------------------- */
+
+const query = document.getElementById('query');
+const result = document.getElementById('result');
+const facing = document.getElementById('facing');
+const family = document.getElementById('family');
+const copyFacingButton = document.getElementById('copyFacingOption');
+const copyFamilyButton = document.getElementById('copyFamilyOption');
+
+function showLookup(value){
+  const res = processColorRules(value);
+
+  if(!value.trim()){
+    result.classList.add('hidden');
+    facing.textContent = '';
+    family.textContent = '';
+    copyFacingButton.disabled = true;
+    copyFamilyButton.disabled = true;
+    return;
+  }
+
+  result.classList.remove('hidden');
+  facing.textContent = res.facing;
+  family.textContent = res.family;
+  document.getElementById('charCount').textContent =
+    `${res.charLen}/30 chars`;
+
+  const usable = res.found && res.facing !== '—';
+  copyFacingButton.disabled = !usable;
+  copyFamilyButton.disabled = !usable;
+}
+
+query.addEventListener('input', () => showLookup(query.value));
+
+query.addEventListener('keydown', e => {
+  if(e.key === 'Escape'){
+    query.value = '';
+    showLookup('');
+  }
+
+  if(e.key === 'Enter' && !e.shiftKey){
+    const res = processColorRules(query.value);
+    if(res.found){
+      copyValue(res.facing, copyFacingButton);
     }
+  }
+});
 
-    async function runBatchProcess() {
-      const rawText = document.getElementById("batchInput").value.trim();
-      if (!rawText) return alert("Please paste vendor colors first.");
+/* Tabs */
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab')
+      .forEach(x => x.classList.remove('active'));
 
-      if (!APPS_SCRIPT_URL) {
-        switchTab('sources');
-        return alert("Please configure your Google Apps Script Web App URL first.");
-      }
+    document.querySelectorAll('.panel')
+      .forEach(x => x.classList.add('hidden'));
 
-      const lines = rawText.split("\n").map(l => l.trim()).filter(l => l.length > 0);
-      const total = lines.length;
+    tab.classList.add('active');
+    document.getElementById(tab.dataset.panel).classList.remove('hidden');
+  });
+});
 
-      document.getElementById("counterStatus").innerText = `Processing batch of ${total} items via Sheet Gemini formulas...`;
-      document.getElementById("tableWrapper").classList.remove("hidden");
-      document.getElementById("exportToolbar").classList.remove("hidden");
-      
-      const tbody = document.getElementById("resultsTbody");
-      tbody.innerHTML = "";
-      processedData = [];
+/* Clipboard with fallback */
+async function copyValue(value, button){
+  if(!value || value === '—' || value === 'not found') return;
 
-      try {
-        // Send ALL lines in ONE parallel request
-        const res = await fetch(APPS_SCRIPT_URL, {
-          method: "POST",
-          headers: { "Content-Type": "text/plain;charset=utf-8" },
-          body: JSON.stringify({ rawColors: lines })
-        });
-        
-        const resultsArray = await res.json();
-        
-        if (resultsArray.error) {
-          alert("Backend Error: " + resultsArray.error);
-          return;
-        }
+  try{
+    await navigator.clipboard.writeText(value);
+  }catch(err){
+    const area = document.createElement('textarea');
+    area.value = value;
+    area.style.position = 'fixed';
+    area.style.opacity = '0';
+    document.body.appendChild(area);
+    area.select();
+    document.execCommand('copy');
+    area.remove();
+  }
 
-        processedData = resultsArray;
+  if(button){
+    const original = button.textContent;
+    button.textContent = 'copied ✓';
+    button.classList.add('is-copied');
 
-        // Render all rows in table
-        resultsArray.forEach((item, i) => {
-          tbody.innerHTML += `
-            <tr>
-              <td class="col-num">${i + 1}</td>
-              <td class="col-raw">${escapeHtml(item.raw)}</td>
-              <td class="col-facing">${escapeHtml(item.facing)}</td>
-              <td class="col-family">■ ${escapeHtml(item.family)}</td>
-            </tr>
-          `;
-        });
+    setTimeout(() => {
+      button.textContent = original;
+      button.classList.remove('is-copied');
+    }, 1100);
+  }
+}
 
-        document.getElementById("counterStatus").innerText = `${total} row${total > 1 ? 's' : ''} · ${total} matched · 0 missing`;
+copyFacingButton.onclick = () => {
+  copyValue(facing.textContent, copyFacingButton);
+};
 
-      } catch (err) {
-        console.error("Batch error:", err);
-        document.getElementById("counterStatus").innerText = `Error processing batch.`;
-      }
-    }
+copyFamilyButton.onclick = () => {
+  copyValue(family.textContent, copyFamilyButton);
+};
 
-    async function runSingleProcess() {
-      const val = document.getElementById("singleInput").value.trim();
-      if (!val) return;
-      document.getElementById("batchInput").value = val;
-      switchTab('batch');
-      runBatchProcess();
-    }
+/* ------------------------- Batch ------------------------- */
 
-    /* Export Handlers */
-    function copyFacingOnly() {
-      const txt = processedData.map(d => d.facing).join("\n");
-      navigator.clipboard.writeText(txt);
-      alert("Copied customer_facing_color to clipboard!");
-    }
+function renderBatch(){
+  const input = document.getElementById('batchInput').value;
 
-    function copyFamilyOnly() {
-      const txt = processedData.map(d => d.family).join("\n");
-      navigator.clipboard.writeText(txt);
-      alert("Copied color_family to clipboard!");
-    }
+  const rows = input
+    .split(/\r?\n/)
+    .map(x => x.trim())
+    .filter(Boolean);
 
-    function copyFacingAndFamily() {
-      const txt = processedData.map(d => `${d.facing}\t${d.family}`).join("\n");
-      navigator.clipboard.writeText(txt);
-      alert("Copied facing + family (TSV) to clipboard!");
-    }
+  const tbody = document.getElementById('batchRows');
 
-    function copyAllColumns() {
-      const txt = processedData.map(d => `${d.raw}\t${d.facing}\t${d.family}`).join("\n");
-      navigator.clipboard.writeText(txt);
-      alert("Copied all columns to clipboard!");
-    }
+  tbody.innerHTML = rows.map((raw, index) => {
+    const res = processColorRules(raw);
 
-    function copyMissingOnly() {
-      const txt = processedData.filter(d => d.family === 'Other' || d.family === 'Error').map(d => d.raw).join("\n");
-      navigator.clipboard.writeText(txt || "No missing matches found.");
-    }
+    return `<tr>
+      <td>${index + 1}</td>
+      <td>${escapeHtml(raw)}</td>
+      <td>${escapeHtml(res.facing)}</td>
+      <td>${escapeHtml(res.family)}</td>
+    </tr>`;
+  }).join('');
 
-    function downloadCSV() {
-      let csvStr = "raw_input,customer_facing_color,color_family\n";
-      processedData.forEach(d => {
-        csvStr += `"${d.raw}","${d.facing}","${d.family}"\n`;
-      });
-      const blob = new Blob([csvStr], { type: "text/csv" });
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "nuorder_cleaned_colors.csv";
-      a.click();
-    }
+  document.getElementById('batchTable')
+    .classList.toggle('hidden', rows.length === 0);
 
-    function escapeHtml(str) {
-      return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-    }
-  </script>
+  const matches = rows
+    .map(raw => processColorRules(raw))
+    .filter(res => res.found && res.facing !== '—');
+
+  document.getElementById('batchCopyFacing').disabled = matches.length === 0;
+  document.getElementById('batchCopyFamily').disabled = matches.length === 0;
+}
+
+document.getElementById('runBatch').onclick = renderBatch;
+
+document.getElementById('clearBatch').onclick = () => {
+  document.getElementById('batchInput').value = '';
+  document.getElementById('batchRows').innerHTML = '';
+  document.getElementById('batchTable').classList.add('hidden');
+  document.getElementById('batchCopyFacing').disabled = true;
+  document.getElementById('batchCopyFamily').disabled = true;
+};
+
+function getBatchResults(){
+  const input = document.getElementById('batchInput').value;
+
+  return input
+    .split(/\r?\n/)
+    .map(x => x.trim())
+    .filter(Boolean)
+    .map(raw => ({
+      raw,
+      ...processColorRules(raw)
+    }))
+    .filter(x => x.found && x.facing !== '—');
+}
+
+document.getElementById('batchCopyFacing').onclick = () => {
+  const rows = getBatchResults();
+  copyValue(
+    rows.map(x => x.facing).join('\n'),
+    document.getElementById('batchCopyFacing')
+  );
+};
+
+document.getElementById('batchCopyFamily').onclick = () => {
+  const rows = getBatchResults();
+  copyValue(
+    rows.map(x => x.family).join('\n'),
+    document.getElementById('batchCopyFamily')
+  );
+};
+
+document.getElementById('batchInput').addEventListener('keydown', e => {
+  if(e.ctrlKey && e.key === 'Enter'){
+    e.preventDefault();
+    renderBatch();
+  }
+
+  if(e.key === 'Escape'){
+    document.getElementById('clearBatch').click();
+  }
+});
+
+/* ------------------------- Sources ------------------------- */
+
+document.getElementById('addSource').onclick = () => {
+  const input = document.getElementById('sourceUrl');
+
+  if(!input.value.trim()) return;
+
+  const li = document.createElement('li');
+  li.innerHTML =
+    escapeHtml(input.value) +
+    " <span style='float:right;color:#35f27d'>added</span>";
+
+  document.getElementById('sourceList').appendChild(li);
+  input.value = '';
+};
+
+/* Refresh */
+document.getElementById('refresh').onclick = () => {
+  const button = document.getElementById('refresh');
+  button.textContent = '↻ refreshing…';
+
+  setTimeout(() => {
+    button.textContent = '↻ refresh';
+  }, 500);
+};
+
+/* Timestamp */
+document.getElementById('rebuilt').textContent =
+  new Date().toLocaleString();
+
+/* Escape HTML for batch/source display */
+function escapeHtml(value){
+  return String(value).replace(/[&<>"']/g, c => ({
+    '&':'&amp;',
+    '<':'&lt;',
+    '>':'&gt;',
+    '"':'&quot;',
+    "'":'&#039;'
+  }[c]));
+}
+</script>
 </body>
 </html>
